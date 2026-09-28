@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "targets": {
+    "/": {
+      "targetKind": "new-ui",
+      "projectId": "660c1546-62a7-476f-9742-c21df1cbbf96",
+      "activeDraftId": "82143fa7-dab3-4b4e-a0fe-b9c78e02d1d9",
+      "designSystemPath": ".superdesign/design-system.md",
+      "referenceIds": [],
+      "contextFiles": [
+        ".superdesign/design-system.md"
+      ],
+      "fingerprints": {
+        ".superdesign/design-system.md": "c6252a98defe7aeffdc56f92462d6f51f728bea3b94243547281bd9283e44468"
+      },
+      "components": [],
+      "drafts": {
+        "82143fa7-dab3-4b4e-a0fe-b9c78e02d1d9": {
+          "title": "ASCEND / S7 — Refined Optical Archive",
+          "visualDirection": "mineral-paper optical laboratory with asymmetric split-glass lamellae",
+          "currentVersion": 2
+        }
+      },
+      "updatedAt": "2026-09-28T18:21:32Z"
+    }
+  }
+}
