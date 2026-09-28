@@ -35,7 +35,7 @@ function buildTimeline(view: SocialView): gsap.core.Timeline {
   const timeline = gsap.timeline({ paused: true });
 
   timeline
-    .set(panel, { transformOrigin: card ? '28px 28px' : '28px 50%' }, 0)
+    .set(panel, { transformOrigin: card ? 'calc(100% - 28px) calc(100% - 28px)' : 'calc(100% - 28px) 50%' }, 0)
     .fromTo(
       panel,
       { autoAlpha: 0, scaleX: card ? 0.18 : 0.16, scaleY: card ? 0.24 : 1 },

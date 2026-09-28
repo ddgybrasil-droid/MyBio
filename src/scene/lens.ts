@@ -248,13 +248,8 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
       frame.hh += f.hh * w;
       switch (id) {
         case 'hero': {
-          let turn = 0;
-          if (!state.reducedMotion) {
-            const hs = sections.height('hero');
-            const p0 = hs > 0 ? viewportH / (hs + viewportH) : 0.5;
-            turn = clamp((state.section.hero - p0) / Math.max(1e-3, 1 - p0), 0, 1);
-          }
-          heroPose(scratch, turn);
+          const story = state.reducedMotion ? 0 : state.story;
+          heroPose(scratch, story);
           break;
         }
         case 'about':

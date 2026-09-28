@@ -46,7 +46,7 @@ The anchor's bounding rect (read once per frame, cheap) tells the scene where th
 
 ### Section progress
 
-Sections have ids `hero`, `about`, `work`, `lab`, `contact`. `initUI` writes `state.section[id]` (0 → 1 as the section passes through the viewport), `state.scroll`, `state.velocity`, `state.dark`, `state.pointer`, `state.activeSocial` and calls `triggerBurst()` on social activation.
+Sections have ids `hero`, `about`, `work`, `lab`, `contact`. `initUI` writes `state.section[id]` (0 → 1 as the section passes through the viewport), `state.scroll`, `state.story` (opening optical chapter 0..1), `state.velocity`, `state.dark`, `state.pointer`, `state.activeSocial` and calls `triggerBurst()` on social activation.
 
 ### Specimens (inside `#work`)
 

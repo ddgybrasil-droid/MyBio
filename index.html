@@ -40,7 +40,7 @@
     </header>
 
     <main>
-      <section id="hero" class="hero section" data-section data-section-label="Калибровка">
+      <section id="hero" class="hero section" data-section data-section-label="Калибровка" data-optical-chapter>
         <div class="hero__grid page-grid">
           <div class="hero__copy">
             <p class="eyebrow" data-hero-eyebrow>Optical archive / active calibration</p>
@@ -56,10 +56,10 @@
             <div class="static-lens static-lens--hero" aria-hidden="true">
               <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
             </div>
-            <p class="lens-data" aria-hidden="true">
-              <span>Rotation limit / 16°</span>
-              <span>Split planes / 07</span>
-              <span>State / assembled</span>
+            <p class="lens-data" data-lens-data data-phase="assembled" aria-hidden="true">
+              <span data-lens-rotation>Rotation limit / 16°</span>
+              <span data-lens-planes>Split planes / 07</span>
+              <span data-lens-state>State / assembled</span>
             </p>
           </div>
         </div>
@@ -240,80 +240,124 @@
         <div class="page-grid">
           <header class="section-heading contact__heading">
             <p class="eyebrow">05 / Сигнал</p>
-            <h2 data-reveal-heading>Выберите канал.<br />Подайте ясный сигнал.</h2>
+            <h2 data-reveal-heading>Три выходных канала.<br />Один оптический путь.</h2>
+            <p class="contact__lede" data-entry-reveal>
+              Сигнал выходит через калиброванную панель: каждый канал — стеклянная пластина
+              с постоянным адресом. Апертура открывает действие, не прячет контакт.
+            </p>
           </header>
           <div class="contact__lens" data-lens-anchor="contact" aria-hidden="true"></div>
 
-          <div class="contact-rail" data-entry-reveal>
-            <article class="social-reveal social-reveal--discord" data-social-reveal="discord">
-              <button class="social-puck social-puck--discord" type="button" data-social-trigger="discord" aria-expanded="false" aria-controls="discord-details" aria-label="Скопировать Discord @ascend_s7">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M4.15 9.35c-1.05.6-1.4 1.75-1.2 3.05.2 1.3.9 2.2 2 2.5" />
-                  <path d="M19.85 9.35c1.05.6 1.4 1.75 1.2 3.05-.2 1.3-.9 2.2-2 2.5" />
-                  <path d="M7.15 8.05C8.4 6.55 9.85 5.85 12 5.85s3.6.7 4.85 2.2" />
-                  <circle class="optic-pupil" cx="9" cy="12.25" r="1.9" />
-                  <circle class="optic-pupil" cx="15" cy="12.25" r="1.9" />
-                  <path d="M8.65 16.1c.95.85 2.05 1.25 3.35 1.25s2.4-.4 3.35-1.25" />
-                </svg>
-              </button>
-              <div class="social-capsule" id="discord-details" data-social-details inert>
-                <span class="social-capsule__socket" aria-hidden="true"></span>
-                <p><small>Discord / copy</small><strong>@ascend_s7</strong></p>
-                <button type="button" data-copy-discord><span data-copy-label>Скопировать</span></button>
-                <button class="social-close" type="button" data-social-close aria-label="Закрыть Discord">×</button>
-              </div>
-            </article>
+          <div class="signal-bay">
+            <div class="signal-bay__meta" aria-hidden="true">
+              <span>Output bay / calibrated</span>
+              <span class="signal-bay__rule"></span>
+              <span>03 channels · optical path</span>
+            </div>
 
-            <article class="social-reveal social-reveal--telegram" data-social-reveal="telegram">
-              <button class="social-puck social-puck--telegram" type="button" data-social-trigger="telegram" aria-expanded="false" aria-controls="telegram-details" aria-label="Показать Telegram @abouthard">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="M3.15 11.2 20.75 3.85 14.1 20.2 10.65 13.35 3.15 11.2Z" />
-                  <path d="M10.65 13.35 20.75 3.85" />
-                  <path class="optic-facet" d="M10.65 13.35 15.6 11.15" />
-                </svg>
-              </button>
-              <div class="social-capsule" id="telegram-details" data-social-details inert>
-                <span class="signal-glint" aria-hidden="true"></span>
-                <span class="social-capsule__socket" aria-hidden="true"></span>
-                <p><small>Telegram / direct</small><strong>@abouthard</strong></p>
-                <a href="https://t.me/abouthard" target="_blank" rel="noreferrer">Написать ↗</a>
-                <button class="social-close" type="button" data-social-close aria-label="Закрыть Telegram">×</button>
-              </div>
-            </article>
-
-            <article class="social-reveal social-reveal--tiktok" data-social-reveal="tiktok">
-              <button class="social-puck social-puck--tiktok" type="button" data-social-trigger="tiktok" aria-expanded="false" aria-controls="tiktok-details" aria-label="Показать TikTok @tg.abouthard">
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <g class="tiktok-ghost tiktok-ghost--cyan">
-                    <circle cx="8.35" cy="16.55" r="3.05" />
-                    <path d="M11.4 16.4V6.1c1.2 1.7 2.9 2.75 5.2 3" />
-                  </g>
-                  <g class="tiktok-ghost tiktok-ghost--red">
-                    <circle cx="8.35" cy="16.55" r="3.05" />
-                    <path d="M11.4 16.4V6.1c1.2 1.7 2.9 2.75 5.2 3" />
-                  </g>
-                  <g>
-                    <circle cx="8.35" cy="16.55" r="3.05" />
-                    <path d="M11.4 16.4V6.1c1.2 1.7 2.9 2.75 5.2 3" />
-                  </g>
-                </svg>
-              </button>
-              <div class="tiktok-card" id="tiktok-details" data-social-details inert>
-                <button class="social-close" type="button" data-social-close aria-label="Закрыть TikTok">×</button>
-                <header>
-                  <div>
-                    <small>TikTok / профиль</small>
-                    <strong>@tg.abouthard</strong>
+            <div class="contact-rail">
+              <article class="signal-plate social-reveal social-reveal--discord" data-social-reveal="discord">
+                <div class="signal-plate__frame">
+                  <div class="signal-plate__head">
+                    <span class="signal-plate__index">CH-01</span>
+                    <span class="signal-plate__mode">Copy</span>
                   </div>
-                </header>
-                <p class="tiktok-card__blurb">Короткие этюды по форме и материалу: 3D, шейдеры, движение в кадре.</p>
-                <p class="tiktok-card__note">Профиль открывается отдельной кнопкой.</p>
-                <div class="tiktok-card__actions">
-                  <a href="https://www.tiktok.com/@tg.abouthard" target="_blank" rel="noreferrer">Открыть профиль ↗</a>
-                  <button type="button" data-copy-tiktok>Скопировать</button>
+                  <p class="signal-plate__channel">Discord</p>
+                  <p class="signal-plate__handle">@ascend_s7</p>
+                  <p class="signal-plate__note">Стабильного URL нет — копируем ник.</p>
+                  <div class="signal-plate__ticks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                  <button class="social-puck social-puck--discord" type="button" data-social-trigger="discord" aria-expanded="false" aria-controls="discord-details" aria-label="Скопировать Discord @ascend_s7">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M4.15 9.35c-1.05.6-1.4 1.75-1.2 3.05.2 1.3.9 2.2 2 2.5" />
+                      <path d="M19.85 9.35c1.05.6 1.4 1.75 1.2 3.05-.2 1.3-.9 2.2-2 2.5" />
+                      <path d="M7.15 8.05C8.4 6.55 9.85 5.85 12 5.85s3.6.7 4.85 2.2" />
+                      <circle class="optic-pupil" cx="9" cy="12.25" r="1.9" />
+                      <circle class="optic-pupil" cx="15" cy="12.25" r="1.9" />
+                      <path d="M8.65 16.1c.95.85 2.05 1.25 3.35 1.25s2.4-.4 3.35-1.25" />
+                    </svg>
+                  </button>
                 </div>
-              </div>
-            </article>
+                <div class="social-capsule" id="discord-details" data-social-details inert>
+                  <span class="social-capsule__socket" aria-hidden="true"></span>
+                  <p><small>Discord / copy</small><strong>@ascend_s7</strong></p>
+                  <button type="button" data-copy-discord><span data-copy-label>Скопировать</span></button>
+                  <button class="social-close" type="button" data-social-close aria-label="Закрыть Discord">×</button>
+                </div>
+              </article>
+
+              <article class="signal-plate social-reveal social-reveal--telegram" data-social-reveal="telegram">
+                <div class="signal-plate__frame">
+                  <div class="signal-plate__head">
+                    <span class="signal-plate__index">CH-02</span>
+                    <span class="signal-plate__mode">Direct</span>
+                  </div>
+                  <p class="signal-plate__channel">Telegram</p>
+                  <p class="signal-plate__handle">@abouthard</p>
+                  <p class="signal-plate__note">Прямой канал — без посредников.</p>
+                  <div class="signal-plate__ticks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                  <button class="social-puck social-puck--telegram" type="button" data-social-trigger="telegram" aria-expanded="false" aria-controls="telegram-details" aria-label="Показать Telegram @abouthard">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M3.15 11.2 20.75 3.85 14.1 20.2 10.65 13.35 3.15 11.2Z" />
+                      <path d="M10.65 13.35 20.75 3.85" />
+                      <path class="optic-facet" d="M10.65 13.35 15.6 11.15" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="social-capsule" id="telegram-details" data-social-details inert>
+                  <span class="signal-glint" aria-hidden="true"></span>
+                  <span class="social-capsule__socket" aria-hidden="true"></span>
+                  <p><small>Telegram / direct</small><strong>@abouthard</strong></p>
+                  <a href="https://t.me/abouthard" target="_blank" rel="noreferrer">Написать ↗</a>
+                  <button class="social-close" type="button" data-social-close aria-label="Закрыть Telegram">×</button>
+                </div>
+              </article>
+
+              <article class="signal-plate social-reveal social-reveal--tiktok" data-social-reveal="tiktok">
+                <div class="signal-plate__frame">
+                  <div class="signal-plate__head">
+                    <span class="signal-plate__index">CH-03</span>
+                    <span class="signal-plate__mode">Profile</span>
+                  </div>
+                  <p class="signal-plate__channel">TikTok</p>
+                  <p class="signal-plate__handle">@tg.abouthard</p>
+                  <p class="signal-plate__note">Короткие этюды по форме и материалу.</p>
+                  <div class="signal-plate__ticks" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                  <button class="social-puck social-puck--tiktok" type="button" data-social-trigger="tiktok" aria-expanded="false" aria-controls="tiktok-details" aria-label="Показать TikTok @tg.abouthard">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <g class="tiktok-ghost tiktok-ghost--cyan">
+                        <circle cx="8.35" cy="16.55" r="3.05" />
+                        <path d="M11.4 16.4V6.1c1.2 1.7 2.9 2.75 5.2 3" />
+                      </g>
+                      <g class="tiktok-ghost tiktok-ghost--red">
+                        <circle cx="8.35" cy="16.55" r="3.05" />
+                        <path d="M11.4 16.4V6.1c1.2 1.7 2.9 2.75 5.2 3" />
+                      </g>
+                      <g>
+                        <circle cx="8.35" cy="16.55" r="3.05" />
+                        <path d="M11.4 16.4V6.1c1.2 1.7 2.9 2.75 5.2 3" />
+                      </g>
+                    </svg>
+                  </button>
+                </div>
+                <div class="tiktok-card" id="tiktok-details" data-social-details inert>
+                  <button class="social-close" type="button" data-social-close aria-label="Закрыть TikTok">×</button>
+                  <header>
+                    <div>
+                      <small>TikTok / профиль</small>
+                      <strong>@tg.abouthard</strong>
+                    </div>
+                  </header>
+                  <p class="tiktok-card__blurb">Короткие этюды по форме и материалу: 3D, шейдеры, движение в кадре.</p>
+                  <p class="tiktok-card__note">Профиль открывается отдельной кнопкой.</p>
+                  <div class="tiktok-card__actions">
+                    <a href="https://www.tiktok.com/@tg.abouthard" target="_blank" rel="noreferrer">Открыть профиль ↗</a>
+                    <button type="button" data-copy-tiktok>Скопировать</button>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <p class="signal-bay__hint" aria-hidden="true">Коснитесь апертуры канала, чтобы открыть действие</p>
           </div>
 
           <p class="contact-status" data-social-status role="status" aria-live="polite"></p>
@@ -326,6 +370,7 @@
             </ul>
           </footer>
         </div>
+      </section>
       </section>
     </main>
 

@@ -303,18 +303,22 @@ main,
   transform-origin: left center;
 }
 
-/* Hero */
+/* Hero — tall optical chapter (scrub runway for explode / orbit / handoff) */
 .hero {
-  min-height: max(920px, 140svh);
+  min-height: max(1080px, 178svh);
   overflow: clip;
   border-bottom: 1px solid var(--line);
 }
 
 .hero__grid {
-  min-height: max(780px, 122svh);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  min-height: max(820px, 100svh);
   align-content: end;
   padding-top: calc(var(--rail-height) + var(--space-8));
-  padding-bottom: clamp(180px, 20vw, 330px);
+  padding-bottom: clamp(180px, 18vw, 300px);
+  isolation: isolate;
 }
 
 .hero__copy {
@@ -423,10 +427,22 @@ main,
   bottom: -10px;
   padding-left: var(--space-2);
   border-left: 1px solid var(--line-strong);
+  transition: border-color var(--duration-state) var(--ease-out);
 }
 
 .lens-data span {
   display: block;
+  min-height: 1.15em;
+  transition: opacity var(--duration-state) var(--ease-out);
+}
+
+.lens-data[data-phase="exploded"],
+.lens-data[data-phase="orbit"] {
+  border-left-color: color-mix(in srgb, var(--focus) 55%, var(--line-strong));
+}
+
+.lens-data[data-phase="calibrated"] {
+  border-left-color: color-mix(in srgb, var(--ink) 48%, transparent);
 }
 
 .hero-socials {
@@ -559,6 +575,15 @@ main,
   transform-origin: left;
 }
 
+html.js:not(.reduced-motion) .scroll-cue span {
+  animation: scroll-cue-pulse 2.4s var(--ease-out) infinite;
+}
+
+@keyframes scroll-cue-pulse {
+  0%, 100% { transform: scaleX(0.35); opacity: 0.45; }
+  45% { transform: scaleX(1); opacity: 1; }
+}
+
 .hero__wordmark {
   position: absolute;
   z-index: 2;
@@ -630,8 +655,7 @@ main,
   border-right: 1px solid var(--line);
 }
 
-.capability::before,
-.contact-rail::before {
+.capability::before {
   position: absolute;
   top: -1px;
   right: 0;
@@ -682,11 +706,13 @@ main,
 
 /* Work chamber */
 .work {
+  --chamber-veil: 0;
   z-index: 3;
   min-height: 100svh;
   overflow: clip;
   background: var(--void);
   color: var(--void-ink);
+  box-shadow: inset 0 120px 120px -80px color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 55%), transparent);
 }
 
 .work__inner {
@@ -749,9 +775,12 @@ main,
   aspect-ratio: 4 / 3;
   grid-column: 2 / span 7;
   border: 1px solid var(--void-line);
-  background: var(--void);
+  background:
+    radial-gradient(120% 90% at 50% 42%, color-mix(in srgb, var(--void-ink) 6%, transparent), transparent 58%),
+    var(--void);
   color: color-mix(in srgb, var(--void-ink) 48%, transparent);
-  clip-path: inset(0 0 0 0);
+  clip-path: inset(0% 0% 0% 0%);
+  transform-origin: 50% 48%;
 }
 
 .specimen__stage::before,
@@ -989,63 +1018,210 @@ main,
   border-block: 1px solid var(--line);
 }
 
-/* Contact */
+/* Contact — optical signal bay (premium when closed) */
 .contact {
-  min-height: 110svh;
+  min-height: 118svh;
   padding-top: var(--section-gap);
+  padding-bottom: clamp(48px, 6vw, 96px);
 }
 
 .contact__heading {
   z-index: 3;
-  grid-column: 1 / span 10;
+  grid-column: 1 / span 8;
 }
 
 .contact__heading h2 {
-  max-width: 14ch;
+  max-width: 16ch;
+}
+
+.contact__lede {
+  max-width: 42rem;
+  margin: var(--space-4) 0 0;
+  color: var(--ink-secondary);
+  line-height: 1.55;
+  text-wrap: pretty;
 }
 
 .contact__lens {
   position: absolute;
   z-index: 0;
-  top: 24%;
-  right: 8%;
-  width: min(60vw, 880px);
-  height: 48%;
+  top: 18%;
+  right: 4%;
+  width: min(58vw, 820px);
+  height: 56%;
+  pointer-events: none;
+}
+
+.signal-bay {
+  position: relative;
+  z-index: 5;
+  margin-top: clamp(64px, 9vw, 140px);
+  padding: clamp(28px, 3.5vw, 48px) clamp(20px, 2.5vw, 36px) clamp(24px, 3vw, 40px);
+  grid-column: 1 / -1;
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-solid) 72%, transparent), color-mix(in srgb, var(--canvas) 40%, transparent)),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 47px,
+      color-mix(in srgb, var(--ink) 5%, transparent) 47px 48px
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.signal-bay__meta {
+  display: flex;
+  margin-bottom: var(--space-4);
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--ink-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.signal-bay__rule {
+  flex: 1;
+  height: 1px;
+  background: var(--line-strong);
+}
+
+.signal-bay__hint {
+  margin: var(--space-4) 0 0;
+  color: var(--ink-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 .contact-rail {
   position: relative;
   z-index: 5;
   display: grid;
-  min-height: 340px;
-  margin-top: clamp(56px, 8vw, 120px);
-  padding-block: var(--space-6);
-  grid-column: 1 / -1;
-  grid-template-columns: repeat(3, 1fr);
-  align-items: start;
-  gap: var(--space-4);
-  border-block: 1px solid var(--line);
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: var(--space-3);
+  border: 0;
 }
 
 .contact-rail::after {
-  position: absolute;
-  z-index: -1;
-  top: 74px;
-  right: 2%;
-  left: 2%;
-  height: 1px;
-  background: var(--line-strong);
-  content: "";
+  display: none;
 }
 
-.social-reveal {
+.social-reveal,
+.signal-plate {
   position: relative;
   min-width: 0;
-  min-height: 56px;
+  min-height: 0;
 }
 
 .social-reveal.is-open {
   z-index: 6;
+}
+
+.signal-plate__frame {
+  position: relative;
+  display: flex;
+  min-height: 280px;
+  padding: 22px 20px 84px;
+  flex-direction: column;
+  gap: 8px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 16%, white);
+  background:
+    linear-gradient(165deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.08) 42%, transparent 70%),
+    color-mix(in srgb, var(--surface-solid) 78%, transparent);
+  box-shadow:
+    var(--glass-edge),
+    0 18px 40px rgba(21, 24, 22, 0.05);
+  -webkit-backdrop-filter: blur(var(--glass-regular-blur));
+  backdrop-filter: blur(var(--glass-regular-blur));
+  transition:
+    border-color var(--duration-hover) var(--ease-out),
+    transform var(--duration-state) var(--ease-out);
+}
+
+.signal-plate.is-open .signal-plate__frame,
+.signal-plate:focus-within .signal-plate__frame {
+  border-color: color-mix(in srgb, var(--ink) 34%, white);
+}
+
+.signal-plate__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--ink-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.signal-plate__index {
+  color: var(--ink);
+}
+
+.signal-plate__channel {
+  margin: var(--space-3) 0 0;
+  font-size: 0.78rem;
+  font-variation-settings: "wght" 520;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.signal-plate__handle {
+  margin: 4px 0 0;
+  font-size: clamp(1.35rem, 2.1vw, 1.85rem);
+  font-variation-settings: "wght" 510;
+  letter-spacing: -0.045em;
+  line-height: 1.05;
+}
+
+.signal-plate__note {
+  max-width: 22ch;
+  margin: 10px 0 0;
+  color: var(--ink-secondary);
+  font-size: 0.86rem;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+.signal-plate__ticks {
+  position: absolute;
+  right: 18px;
+  bottom: 92px;
+  left: 18px;
+  display: flex;
+  height: 10px;
+  align-items: flex-end;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.signal-plate__ticks i {
+  display: block;
+  width: 1px;
+  height: 6px;
+  background: color-mix(in srgb, var(--ink) 28%, transparent);
+}
+
+.signal-plate__ticks i:nth-child(odd) {
+  height: 10px;
+}
+
+.signal-plate .social-puck {
+  position: absolute;
+  z-index: 5;
+  right: 18px;
+  bottom: 18px;
 }
 
 .social-reveal > .social-puck {
@@ -1064,11 +1240,13 @@ main,
 
 .social-capsule {
   position: absolute;
-  z-index: 3;
-  top: 0;
-  left: 0;
+  z-index: 7;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
   display: flex;
-  width: min(348px, 100%);
+  width: auto;
+  max-width: none;
   height: 56px;
   padding: 0 54px 0 68px;
   align-items: center;
@@ -1086,7 +1264,7 @@ main,
   visibility: hidden;
   opacity: 0;
   transform: scaleX(0.16);
-  transform-origin: 28px 50%;
+  transform-origin: calc(100% - 28px) 50%;
 }
 
 .social-capsule__socket {
@@ -1173,14 +1351,15 @@ main,
 
 .tiktok-card {
   position: absolute;
-  z-index: 3;
-  top: 0;
-  left: 0;
-  width: min(340px, calc(100vw - var(--gutter) * 2));
+  z-index: 7;
+  right: 12px;
+  bottom: 12px;
+  left: 12px;
+  width: auto;
   padding: 16px 16px 14px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--ink) 12%, white);
-  border-radius: 28px 28px var(--radius-md) var(--radius-md);
+  border-radius: 22px;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0) 28%),
     var(--glass-regular-bg);
@@ -1190,11 +1369,11 @@ main,
   visibility: hidden;
   opacity: 0;
   transform: scale(0.2);
-  transform-origin: 28px 28px;
+  transform-origin: calc(100% - 28px) calc(100% - 28px);
 }
 
-.social-reveal--tiktok.is-open {
-  min-height: 228px;
+.social-reveal--tiktok.is-open .signal-plate__frame {
+  min-height: 320px;
 }
 
 .tiktok-card header {
@@ -1364,6 +1543,11 @@ html.js:not(.reduced-motion) [data-capability] {
   .social-puck:hover {
     border-color: color-mix(in srgb, var(--ink) 42%, white);
   }
+
+  .signal-plate:hover .signal-plate__frame {
+    border-color: color-mix(in srgb, var(--ink) 28%, white);
+    transform: translateY(-2px);
+  }
 }
 
 @media (min-width: 900px) {
@@ -1466,11 +1650,15 @@ html.js:not(.reduced-motion) [data-capability] {
   }
 
   .hero {
-    min-height: max(900px, 125svh);
+    min-height: max(900px, 132svh);
   }
 
   .hero__grid {
+    position: relative;
+    top: auto;
+    z-index: auto;
     min-height: max(760px, 110svh);
+    isolation: auto;
   }
 
   .hero__copy {
@@ -1534,23 +1722,37 @@ html.js:not(.reduced-motion) [data-capability] {
     grid-column: 1 / -1;
   }
 
+  .signal-bay {
+    margin-top: var(--space-8);
+    padding: var(--space-3);
+  }
+
   .contact-rail {
     min-height: auto;
     grid-template-columns: 1fr;
-    gap: 38px;
+    gap: var(--space-3);
   }
 
   .contact-rail::after {
     display: none;
   }
 
+  .signal-plate__frame {
+    min-height: 240px;
+    padding-bottom: 78px;
+  }
+
+  .signal-plate__handle {
+    font-size: 1.55rem;
+  }
+
   .social-reveal {
-    min-height: 56px;
+    min-height: 0;
   }
 
   .social-capsule,
   .tiktok-card {
-    width: min(420px, calc(100vw - var(--gutter) * 2));
+    width: auto;
   }
 
   .site-footer {
@@ -1586,14 +1788,18 @@ html.js:not(.reduced-motion) [data-capability] {
   }
 
   .hero {
-    min-height: max(760px, 110svh);
+    min-height: max(760px, 118svh);
   }
 
   .hero__grid {
+    position: relative;
+    top: auto;
+    z-index: auto;
     min-height: 90svh;
     padding-top: 135px;
     padding-bottom: 180px;
     align-content: center;
+    isolation: auto;
   }
 
   .hero__copy {
@@ -1666,7 +1872,7 @@ html.js:not(.reduced-motion) [data-capability] {
   .lab__optic,
   #lab-mount,
   .contact__heading,
-  .contact-rail,
+  .signal-bay,
   .contact-status,
   .site-footer {
     grid-column: 1 / -1;
@@ -1740,12 +1946,16 @@ html.js:not(.reduced-motion) [data-capability] {
     min-height: 520px;
   }
 
-  .contact-rail {
-    padding-block: var(--space-4);
+  .signal-plate__frame {
+    min-height: 228px;
+    padding: 18px 16px 76px;
+  }
+
+  .signal-plate__note {
+    max-width: none;
   }
 
   .social-capsule {
-    width: calc(100vw - 40px);
     padding-right: 46px;
   }
 
@@ -1754,8 +1964,8 @@ html.js:not(.reduced-motion) [data-capability] {
     font-size: 0.72rem;
   }
 
-  .social-reveal--tiktok.is-open {
-    min-height: 268px;
+  .social-reveal--tiktok.is-open .signal-plate__frame {
+    min-height: 300px;
   }
 
   .tiktok-card {
@@ -1843,6 +2053,10 @@ html.reduced-motion *::after {
   animation-duration: 120ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 120ms !important;
+}
+
+html.reduced-motion .scroll-cue span {
+  animation: none;
 }
 
 html.reduced-motion [data-entry-reveal],

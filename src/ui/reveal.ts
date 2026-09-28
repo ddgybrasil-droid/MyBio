@@ -89,17 +89,6 @@ export function initReveals(): void {
               );
           }
 
-          gsap.to(wordmarkLetters, {
-            x: (index: number) => (index - (wordmarkLetters.length - 1) / 2) * 12,
-            yPercent: (index: number) => Math.abs(index - 4) * 3 + 32,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: '#hero',
-              start: 'top top',
-              end: 'bottom top',
-              scrub: 0.7,
-            },
-          });
 
           const headings = gsap.utils.toArray<HTMLElement>('[data-reveal-heading]');
           headings.forEach((heading) => {
@@ -189,36 +178,19 @@ export function initReveals(): void {
             },
           });
 
-          gsap.from('.contact-rail > .social-reveal', {
-            y: 30,
-            rotate: -4,
+          gsap.from('.signal-plate .signal-plate__frame', {
+            y: 36,
             autoAlpha: 0,
-            duration: 0.72,
-            stagger: 0.1,
+            duration: 0.8,
+            stagger: 0.12,
             ease: 'power3.out',
             scrollTrigger: {
-              trigger: '.contact-rail',
-              start: 'top 82%',
+              trigger: '.signal-bay',
+              start: 'top 84%',
               once: true,
             },
           });
 
-          if (conditions.desktop) {
-            gsap.to('.hero__copy', {
-              yPercent: 11,
-              ease: 'none',
-              scrollTrigger: {
-                trigger: '#hero',
-                start: 'top top',
-                end: 'bottom top',
-                scrub: 0.8,
-              },
-            });
-          }
-
-          if (conditions.mobile) {
-            gsap.set('.hero__copy', { clearProps: 'transform' });
-          }
         },
       );
     });
