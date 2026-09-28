@@ -615,9 +615,28 @@ html.js:not(.reduced-motion) .scroll-cue span {
 
 /* About */
 .about {
+  position: relative;
+  z-index: 2;
   min-height: 110svh;
   padding-block: var(--section-gap);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 0;
+}
+
+.about::after {
+  position: absolute;
+  z-index: 4;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: min(28vh, 240px);
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--void) 18%, transparent) 48%,
+    color-mix(in srgb, var(--void) 72%, transparent) 100%
+  );
+  content: "";
+  pointer-events: none;
 }
 
 .about__heading {
@@ -707,16 +726,38 @@ html.js:not(.reduced-motion) .scroll-cue span {
 /* Work chamber */
 .work {
   --chamber-veil: 0;
+  position: relative;
   z-index: 3;
   min-height: 100svh;
   overflow: clip;
   background: var(--void);
   color: var(--void-ink);
-  box-shadow: inset 0 120px 120px -80px color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 55%), transparent);
+  box-shadow:
+    inset 0 160px 140px -90px color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 70%), transparent),
+    inset 0 48px 64px -24px color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 28%), transparent);
+}
+
+.work::before {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: min(42vh, 380px);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 88%), transparent) 0%,
+    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 42%), transparent) 38%,
+    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 8%), transparent) 72%,
+    transparent 100%
+  );
+  content: "";
+  pointer-events: none;
 }
 
 .work__inner {
   position: relative;
+  z-index: 2;
   width: min(100%, var(--max-width));
   min-height: 100svh;
   margin-inline: auto;
@@ -1018,7 +1059,7 @@ html.js:not(.reduced-motion) .scroll-cue span {
   border-block: 1px solid var(--line);
 }
 
-/* Contact — optical signal bay (premium when closed) */
+/* Contact — liquid-glass optical channels (no instrument bay clutter) */
 .contact {
   min-height: 118svh;
   padding-top: var(--section-gap);
@@ -1035,7 +1076,7 @@ html.js:not(.reduced-motion) .scroll-cue span {
 }
 
 .contact__lede {
-  max-width: 42rem;
+  max-width: 40rem;
   margin: var(--space-4) 0 0;
   color: var(--ink-secondary);
   line-height: 1.55;
@@ -1052,71 +1093,19 @@ html.js:not(.reduced-motion) .scroll-cue span {
   pointer-events: none;
 }
 
-.signal-bay {
-  position: relative;
-  z-index: 5;
-  margin-top: clamp(64px, 9vw, 140px);
-  padding: clamp(28px, 3.5vw, 48px) clamp(20px, 2.5vw, 36px) clamp(24px, 3vw, 40px);
-  grid-column: 1 / -1;
-  border: 1px solid var(--line);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--surface-solid) 72%, transparent), color-mix(in srgb, var(--canvas) 40%, transparent)),
-    repeating-linear-gradient(
-      90deg,
-      transparent 0 47px,
-      color-mix(in srgb, var(--ink) 5%, transparent) 47px 48px
-    );
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 color-mix(in srgb, var(--ink) 8%, transparent);
-}
-
-.signal-bay__meta {
-  display: flex;
-  margin-bottom: var(--space-4);
-  align-items: center;
-  gap: var(--space-3);
-  color: var(--ink-secondary);
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.signal-bay__rule {
-  flex: 1;
-  height: 1px;
-  background: var(--line-strong);
-}
-
-.signal-bay__hint {
-  margin: var(--space-4) 0 0;
-  color: var(--ink-secondary);
-  font-family: var(--font-mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.contact-rail {
+.contact-channels {
   position: relative;
   z-index: 5;
   display: grid;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
+  margin-top: clamp(72px, 10vw, 150px);
+  grid-column: 1 / -1;
   grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(16px, 2vw, 28px);
   align-items: stretch;
-  gap: var(--space-3);
-  border: 0;
-}
-
-.contact-rail::after {
-  display: none;
 }
 
 .social-reveal,
-.signal-plate {
+.channel {
   position: relative;
   min-width: 0;
   min-height: 0;
@@ -1126,102 +1115,109 @@ html.js:not(.reduced-motion) .scroll-cue span {
   z-index: 6;
 }
 
-.signal-plate__frame {
+.channel__glass {
   position: relative;
   display: flex;
   min-height: 280px;
-  padding: 22px 20px 84px;
+  padding: 30px 28px 96px;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--ink) 16%, white);
+  border: 1px solid color-mix(in srgb, white 55%, var(--ink) 18%);
+  border-radius: 32px;
   background:
-    linear-gradient(165deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.08) 42%, transparent 70%),
-    color-mix(in srgb, var(--surface-solid) 78%, transparent);
+    linear-gradient(145deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.12) 38%, rgba(255, 255, 255, 0.02) 70%),
+    color-mix(in srgb, var(--surface-solid) 28%, transparent);
   box-shadow:
-    var(--glass-edge),
-    0 18px 40px rgba(21, 24, 22, 0.05);
-  -webkit-backdrop-filter: blur(var(--glass-regular-blur));
-  backdrop-filter: blur(var(--glass-regular-blur));
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(21, 24, 22, 0.08),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.28),
+    0 28px 60px rgba(21, 24, 22, 0.07);
+  -webkit-backdrop-filter: blur(22px) saturate(1.25);
+  backdrop-filter: blur(22px) saturate(1.25);
   transition:
     border-color var(--duration-hover) var(--ease-out),
-    transform var(--duration-state) var(--ease-out);
+    transform var(--duration-state) var(--ease-emphasized),
+    box-shadow var(--duration-state) var(--ease-out);
 }
 
-.signal-plate.is-open .signal-plate__frame,
-.signal-plate:focus-within .signal-plate__frame {
-  border-color: color-mix(in srgb, var(--ink) 34%, white);
+.channel__ring {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 72px;
+  height: 72px;
+  border: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  border-radius: 50%;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  pointer-events: none;
+  opacity: 0.45;
 }
 
-.signal-plate__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
+.channel__ring::after {
+  position: absolute;
+  inset: 18px;
+  border: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
+  border-radius: 50%;
+  content: "";
+}
+
+.channel__spec {
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 70%;
+  height: 55%;
+  background: radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.55), transparent 62%);
+  pointer-events: none;
+}
+
+.channel.is-open .channel__glass,
+.channel:focus-within .channel__glass {
+  border-color: color-mix(in srgb, var(--ink) 28%, white);
+  box-shadow:
+    var(--glass-edge),
+    0 28px 56px rgba(21, 24, 22, 0.08),
+    0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.channel__platform {
+  position: relative;
+  z-index: 1;
+  margin: 0;
   color: var(--ink-secondary);
   font-family: var(--font-mono);
   font-size: 0.62rem;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
-.signal-plate__index {
-  color: var(--ink);
-}
-
-.signal-plate__channel {
-  margin: var(--space-3) 0 0;
-  font-size: 0.78rem;
-  font-variation-settings: "wght" 520;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.signal-plate__handle {
-  margin: 4px 0 0;
-  font-size: clamp(1.35rem, 2.1vw, 1.85rem);
-  font-variation-settings: "wght" 510;
-  letter-spacing: -0.045em;
-  line-height: 1.05;
-}
-
-.signal-plate__note {
-  max-width: 22ch;
+.channel__handle {
+  position: relative;
+  z-index: 1;
   margin: 10px 0 0;
+  font-size: clamp(1.7rem, 2.7vw, 2.35rem);
+  font-variation-settings: "wght" 500;
+  letter-spacing: -0.055em;
+  line-height: 1.02;
+}
+
+.channel__note {
+  position: relative;
+  z-index: 1;
+  max-width: 22ch;
+  margin: 12px 0 0;
   color: var(--ink-secondary);
-  font-size: 0.86rem;
+  font-size: 0.9rem;
   line-height: 1.45;
   text-wrap: pretty;
 }
 
-.signal-plate__ticks {
-  position: absolute;
-  right: 18px;
-  bottom: 92px;
-  left: 18px;
-  display: flex;
-  height: 10px;
-  align-items: flex-end;
-  justify-content: space-between;
-  pointer-events: none;
-}
-
-.signal-plate__ticks i {
-  display: block;
-  width: 1px;
-  height: 6px;
-  background: color-mix(in srgb, var(--ink) 28%, transparent);
-}
-
-.signal-plate__ticks i:nth-child(odd) {
-  height: 10px;
-}
-
-.signal-plate .social-puck {
+.channel .social-puck {
   position: absolute;
   z-index: 5;
-  right: 18px;
-  bottom: 18px;
+  right: 22px;
+  bottom: 22px;
 }
 
 .social-reveal > .social-puck {
@@ -1241,9 +1237,9 @@ html.js:not(.reduced-motion) .scroll-cue span {
 .social-capsule {
   position: absolute;
   z-index: 7;
-  right: 12px;
-  bottom: 12px;
-  left: 12px;
+  right: 14px;
+  bottom: 14px;
+  left: 14px;
   display: flex;
   width: auto;
   max-width: none;
@@ -1256,7 +1252,7 @@ html.js:not(.reduced-motion) .scroll-cue span {
   border: 1px solid color-mix(in srgb, var(--ink) 12%, white);
   border-radius: var(--radius-pill);
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0) 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 34%),
     var(--glass-regular-bg);
   box-shadow: var(--glass-edge), 0 14px 32px rgba(21, 24, 22, 0.06);
   -webkit-backdrop-filter: blur(var(--glass-regular-blur));
@@ -1352,16 +1348,16 @@ html.js:not(.reduced-motion) .scroll-cue span {
 .tiktok-card {
   position: absolute;
   z-index: 7;
-  right: 12px;
-  bottom: 12px;
-  left: 12px;
+  right: 14px;
+  bottom: 14px;
+  left: 14px;
   width: auto;
   padding: 16px 16px 14px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--ink) 12%, white);
   border-radius: 22px;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0) 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0) 28%),
     var(--glass-regular-bg);
   box-shadow: var(--glass-edge), 0 18px 36px rgba(21, 24, 22, 0.07);
   -webkit-backdrop-filter: blur(var(--glass-regular-blur));
@@ -1372,8 +1368,8 @@ html.js:not(.reduced-motion) .scroll-cue span {
   transform-origin: calc(100% - 28px) calc(100% - 28px);
 }
 
-.social-reveal--tiktok.is-open .signal-plate__frame {
-  min-height: 320px;
+.social-reveal--tiktok.is-open .channel__glass {
+  min-height: 340px;
 }
 
 .tiktok-card header {
@@ -1544,9 +1540,9 @@ html.js:not(.reduced-motion) [data-capability] {
     border-color: color-mix(in srgb, var(--ink) 42%, white);
   }
 
-  .signal-plate:hover .signal-plate__frame {
-    border-color: color-mix(in srgb, var(--ink) 28%, white);
-    transform: translateY(-2px);
+  .channel:hover .channel__glass {
+    border-color: color-mix(in srgb, var(--ink) 24%, white);
+    transform: translateY(-3px);
   }
 }
 
@@ -1722,28 +1718,25 @@ html.js:not(.reduced-motion) [data-capability] {
     grid-column: 1 / -1;
   }
 
-  .signal-bay {
+  .contact-channels {
     margin-top: var(--space-8);
-    padding: var(--space-3);
-  }
-
-  .contact-rail {
-    min-height: auto;
     grid-template-columns: 1fr;
     gap: var(--space-3);
   }
 
-  .contact-rail::after {
-    display: none;
-  }
-
-  .signal-plate__frame {
+  .channel__glass {
     min-height: 240px;
-    padding-bottom: 78px;
+    padding: 22px 20px 86px;
+    border-radius: 24px;
   }
 
-  .signal-plate__handle {
-    font-size: 1.55rem;
+  .channel__handle {
+    font-size: 1.6rem;
+  }
+
+  .channel__ring {
+    width: 44px;
+    height: 44px;
   }
 
   .social-reveal {
@@ -1872,7 +1865,7 @@ html.js:not(.reduced-motion) [data-capability] {
   .lab__optic,
   #lab-mount,
   .contact__heading,
-  .signal-bay,
+  .contact-channels,
   .contact-status,
   .site-footer {
     grid-column: 1 / -1;
@@ -1946,12 +1939,12 @@ html.js:not(.reduced-motion) [data-capability] {
     min-height: 520px;
   }
 
-  .signal-plate__frame {
-    min-height: 228px;
+  .channel__glass {
+    min-height: 220px;
     padding: 18px 16px 76px;
   }
 
-  .signal-plate__note {
+  .channel__note {
     max-width: none;
   }
 
@@ -1964,7 +1957,7 @@ html.js:not(.reduced-motion) [data-capability] {
     font-size: 0.72rem;
   }
 
-  .social-reveal--tiktok.is-open .signal-plate__frame {
+  .social-reveal--tiktok.is-open .channel__glass {
     min-height: 300px;
   }
 
@@ -1982,6 +1975,7 @@ html.js:not(.reduced-motion) [data-capability] {
   .social-puck,
   .social-capsule,
   .tiktok-card,
+  .channel__glass,
   .static-lens i {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -2007,6 +2001,12 @@ html.js:not(.reduced-motion) [data-capability] {
       linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0) 32%),
       var(--surface-solid);
   }
+
+  .channel__glass {
+    background:
+      linear-gradient(155deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.35)),
+      var(--surface-solid);
+  }
 }
 
 @media (prefers-reduced-transparency: reduce) {
@@ -2014,6 +2014,7 @@ html.js:not(.reduced-motion) [data-capability] {
   .social-puck,
   .social-capsule,
   .tiktok-card,
+  .channel__glass,
   .static-lens i,
   .lab__optic > span {
     background: var(--surface-solid);
@@ -2032,6 +2033,7 @@ html.js:not(.reduced-motion) [data-capability] {
   .social-puck,
   .social-capsule,
   .tiktok-card,
+  .channel__glass,
   .static-lens i,
   .lab__optic > span {
     background: var(--surface-solid);

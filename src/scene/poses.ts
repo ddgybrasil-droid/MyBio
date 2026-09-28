@@ -62,44 +62,44 @@ function smooth(a: number, b: number, t: number): number {
 }
 
 /**
- * Opening optical chapter driven by scrubbed `story` 0..1 (burger-style explode / orbit / reassemble).
+ * Opening chapter: optical focus-stack / barrel peel — not a cartoon explode-fly.
  *
- * - 0.00–0.18 assembled, quiet turn begins
- * - 0.18–0.48 lamellae explode like specimen layers
- * - 0.48–0.78 camera orbit + scale push while still open
- * - 0.78–1.00 reassemble toward a held calibration stance for the about handoff
+ * Like separating thin glass elements on a precision mount along the optical axis:
+ * - 0.00–0.22 quiet assembled optic, slow intentional yaw
+ * - 0.18–0.58 depth peel: lamellae space primarily in Z with micro lateral stagger
+ * - 0.42–0.78 soft gimbal tilt (pitch/yaw) while peeled — studio examination, not orbit fly
+ * - 0.72–1.00 settle toward the about handoff stance
  */
 export function heroPose(p: Pose, story: number): void {
   const t = clamp01(story);
-  const explode = smooth(0.16, 0.4, t) * (1 - smooth(0.72, 0.94, t));
-  const orbit = smooth(0.34, 0.62, t);
+  const peel = smooth(0.18, 0.46, t) * (1 - smooth(0.72, 0.96, t));
+  const gimbal = smooth(0.38, 0.68, t) * (1 - smooth(0.78, 0.98, t));
   const settle = smooth(0.72, 1, t);
-  const turn = smooth(0.04, 0.88, t);
+  const turn = smooth(0.02, 0.9, t);
 
   for (const s of LAMELLA_SPECS) {
     const i = s.index;
     const k = i - 3;
-    const side = Math.sign(k) || (i % 2 ? 1 : -1);
-    const fan = explode * (0.55 + Math.abs(k) * 0.22);
-    const px = s.x * (1 + 0.55 * explode) + side * fan * 0.42;
-    const py = s.y * (1 + 0.35 * explode) + Math.sin(i * 1.7) * 0.05 * explode;
-    const pz = STAGGER_Z[i] * (1 - 0.35 * explode) - k * 0.38 * explode - orbit * 0.06 * Math.abs(k);
-    const rx = (STAGGER_PITCH[i] + k * 2.4 * explode - 4 * orbit) * DEG;
-    const ry = (STAGGER_YAW[i] + (28 + k * 4) * explode + 10 * orbit * side) * DEG;
-    const rz = (STAGGER_ROLL[i] - k * 1.8 * explode) * DEG;
-    const sx = 1 + 0.04 * explode;
-    const sy = 1 + 0.08 * explode;
-    const sz = 1 + 0.18 * explode;
+    // Optical-axis spacing first; lateral is a whisper so edges catch light, not fly apart.
+    const pz = STAGGER_Z[i] * (1 + 0.35 * peel) - k * 0.22 * peel - k * 0.04 * gimbal;
+    const px = s.x * (1 + 0.08 * peel) + k * 0.018 * peel;
+    const py = s.y * (1 + 0.05 * peel) + Math.sin(i * 1.1) * 0.012 * peel;
+    const rx = (STAGGER_PITCH[i] * (1 - 0.35 * peel) + k * 1.1 * peel - 2.2 * gimbal) * DEG;
+    const ry = (STAGGER_YAW[i] * (1 - 0.25 * peel) + k * 2.4 * peel + 3.5 * gimbal * Math.sign(k || 1)) * DEG;
+    const rz = (STAGGER_ROLL[i] * (1 - 0.4 * peel) - k * 0.55 * peel) * DEG;
+    const sx = 1 + 0.012 * peel;
+    const sy = 1 + 0.02 * peel;
+    const sz = 1 + 0.06 * peel;
     set(p, i, px, py, pz, rx, ry, rz, sx, sy, sz);
   }
 
-  const yaw = (-10 + 28 * turn - 8 * settle) * DEG;
-  const pitch = (3 + 7 * explode - 4 * settle + 5 * orbit) * DEG;
-  const roll = (-2 + 3 * explode * Math.sin(t * Math.PI)) * DEG;
-  const scale = 1 + 0.1 * explode + 0.06 * orbit - 0.04 * settle;
+  const yaw = (-8 + 16 * turn - 6 * settle + 4 * gimbal) * DEG;
+  const pitch = (2.5 + 3.5 * peel + 4 * gimbal - 3.5 * settle) * DEG;
+  const roll = (-1.2 + 1.4 * peel * Math.sin(t * Math.PI) - 0.8 * settle) * DEG;
+  const scale = 1 + 0.035 * peel + 0.02 * gimbal - 0.025 * settle;
   group(p, pitch, yaw, roll, 1, 1, 1, scale);
-  p.group[G.ox] = -0.06 * orbit + 0.04 * settle;
-  p.group[G.oy] = 0.04 * explode - 0.03 * settle;
+  p.group[G.ox] = -0.025 * gimbal + 0.03 * settle;
+  p.group[G.oy] = 0.018 * peel - 0.022 * settle;
 }
 
 /** Exploded along depth and sideways, each slab turned to show its edge. */
@@ -137,7 +137,7 @@ export function contactPose(p: Pose): void {
     const i = s.index;
     set(p, i, s.x * 1.3, s.y * 0.82, STAGGER_Z[i] * 0.5, STAGGER_PITCH[i] * 0.6 * DEG, STAGGER_YAW[i] * 0.8 * DEG, 0, 1, 0.9, 0.75);
   }
-  group(p, -6 * DEG, 8 * DEG, 0, 0.75, 1, 0.9);
+  group(p, -6 * DEG, 8 * DEG, 0, 0.55, 0.85, 0.75);
   p.group[G.oy] = -0.2;
 }
 

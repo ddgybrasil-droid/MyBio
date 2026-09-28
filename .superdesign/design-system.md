@@ -113,7 +113,7 @@ Wide irregular work surfaces with live preview, premise, technology, browser req
 
 ### Contact — Signal Output
 
-An optical **signal bay**: three glass specimen plates on a calibrated instrument panel, with the travelling S7 lens shallow behind them. Each plate shows channel index, mode, handle, and a short note when closed — the aperture puck opens the action.
+Three **liquid-glass optical channels** (floating aperture cards), with the travelling S7 lens shallow behind them. Each card shows platform, always-visible handle, a short note, and an aperture puck — no instrument-plate clutter.
 
 1. Discord `@ascend_s7` — copy
 2. Telegram `@abouthard` — direct
@@ -123,7 +123,7 @@ Plain-text links/handles repeat in the footer.
 
 ## Motion choreography
 
-- Hero: seven lamellae rise and assemble once; scrubbed scroll then explodes, orbits, and reassembles the optic (All Star–style chapter, optical-glass themed) before handing off to About.
+- Hero: seven lamellae rise and assemble once; scrubbed scroll then peels the optic along its focus stack (depth spacing + soft gimbal), then settles toward About — no cartoon explode-fly.
 - Bio: lamellae remain exploded in depth; one becomes the section object.
 - Work: specimens bloom from an optical iris focus inside the dark chamber; one controlled camera track with stable reading windows; active specimens react to pointer by no more than 3 degrees.
 - Experiments: the chamber opens like two optical shutters. Controls attach only when a demo is active.
@@ -133,7 +133,7 @@ Plain-text links/handles repeat in the footer.
 
 ### Contact pucks
 
-Each channel lives on a glass specimen plate with engraved index, always-visible handle, and a 56px optical aperture. Marks stay optical: Discord as two apertures and a slit, Telegram as a folded prism, TikTok as a note with a chromatic ghost. First tap expands an action panel from the aperture; a second tap on the disc, the close control, Escape, or an outside click collapses it. Discord copies `ascend_s7` when it opens. Telegram sweeps a specular glint across the capsule. TikTok grows a short account plate (handle, blurb, open, copy). Reduced motion snaps panels open and shut. The closed bay must already feel intentional — not empty until opened.
+Each channel is a liquid-glass card with always-visible handle and a 56px optical aperture. Marks stay optical: Discord as two apertures and a slit, Telegram as a folded prism, TikTok as a note with a chromatic ghost. First tap expands an action panel from the aperture; a second tap on the disc, the close control, Escape, or an outside click collapses it. Discord copies `ascend_s7` when it opens. Telegram sweeps a specular glint across the capsule. TikTok grows a short account plate (handle, blurb, open, copy). Reduced motion snaps panels open and shut. Closed cards must already feel premium — not empty until opened.
 
 ## Responsive and capability tiers
 

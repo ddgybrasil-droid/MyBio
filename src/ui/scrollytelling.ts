@@ -5,10 +5,10 @@ import { state } from '../state';
 gsap.registerPlugin(ScrollTrigger);
 
 const PHASE_LABELS = [
-  { until: 0.22, status: 'State / assembled', rotation: 'Rotation limit / 16°', planes: 'Split planes / 07' },
-  { until: 0.52, status: 'State / exploded', rotation: 'Layer fan / 42°', planes: 'Depth offset / active' },
-  { until: 0.78, status: 'State / orbit', rotation: 'Yaw sweep / 28°', planes: 'Focus pull / mid' },
-  { until: 1.01, status: 'State / calibrated', rotation: 'Handoff / about', planes: 'Specimen path / open' },
+  { until: 0.22, status: 'State / assembled', rotation: 'Yaw / quiet', planes: 'Focus stack / 07' },
+  { until: 0.52, status: 'State / peel', rotation: 'Barrel spacing', planes: 'Depth peel / active' },
+  { until: 0.78, status: 'State / gimbal', rotation: 'Soft tilt', planes: 'Examination / mid' },
+  { until: 1.01, status: 'State / settle', rotation: 'Handoff / about', planes: 'Specimen path / open' },
 ] as const;
 
 function phaseFor(progress: number): (typeof PHASE_LABELS)[number] {
@@ -83,7 +83,7 @@ export function initScrollytelling(): void {
           start: 'top top',
           endTrigger: about ?? hero,
           end: about ? 'center center' : 'bottom top',
-          scrub: desktop ? 0.72 : 0.55,
+          scrub: desktop ? 0.9 : 0.65,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
             storyProxy.value = self.progress;
@@ -99,7 +99,7 @@ export function initScrollytelling(): void {
             start: 'top top',
             endTrigger: about ?? hero,
             end: about ? 'center center' : 'bottom top',
-            scrub: desktop ? 0.72 : 0.55,
+            scrub: desktop ? 0.9 : 0.65,
             invalidateOnRefresh: true,
           },
         });
@@ -153,41 +153,51 @@ export function initScrollytelling(): void {
           chapter.fromTo(
             lensField,
             { scale: 1, xPercent: 0 },
-            { scale: 1.08, xPercent: -4, duration: 0.55 },
-            0.08,
+            { scale: 1.03, xPercent: -2, duration: 0.6 },
+            0.1,
           );
-          chapter.to(lensField, { scale: 0.94, xPercent: -10, duration: 0.45 }, 0.55);
+          chapter.to(lensField, { scale: 0.98, xPercent: -5, duration: 0.4 }, 0.6);
         }
 
         if (heroSocials) {
           chapter.fromTo(heroSocials, { autoAlpha: 1, y: 0 }, { autoAlpha: 0.2, y: -28, duration: 0.55 }, 0.2);
         }
 
-        // Bridge into the dark specimen chamber: canvas fades, heading blooms.
+        // Bridge into the dark specimen chamber: longer soft veil, heading blooms late.
         if (work && desktop) {
           const heading = work.querySelector<HTMLElement>('.work__heading');
           const counter = work.querySelector<HTMLElement>('.specimen-counter');
+          const veilProxy = { v: 0 };
           gsap
             .timeline({
               scrollTrigger: {
                 trigger: work,
-                start: 'top 92%',
-                end: 'top 18%',
-                scrub: 0.8,
+                start: 'top 98%',
+                end: 'top 8%',
+                scrub: 1.05,
                 invalidateOnRefresh: true,
               },
             })
-            .fromTo(
-              work,
-              { '--chamber-veil': 0 },
-              { '--chamber-veil': 1, duration: 1, ease: 'none' },
+            .to(
+              veilProxy,
+              {
+                v: 1,
+                duration: 1,
+                ease: 'none',
+                onUpdate: () => {
+                  // Ease the CSS custom property for a cream→void handoff that feels continuous.
+                  const t = veilProxy.v;
+                  const eased = t * t * (3 - 2 * t);
+                  work.style.setProperty('--chamber-veil', String(eased));
+                },
+              },
               0,
             );
 
           if (heading) {
             gsap.fromTo(
               heading,
-              { autoAlpha: 0, y: 36, filter: 'blur(8px)' },
+              { autoAlpha: 0, y: 28, filter: 'blur(6px)' },
               {
                 autoAlpha: 1,
                 y: 0,
@@ -195,9 +205,9 @@ export function initScrollytelling(): void {
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 78%',
-                  end: 'top 32%',
-                  scrub: 0.7,
+                  start: 'top 82%',
+                  end: 'top 28%',
+                  scrub: 0.95,
                 },
               },
             );
@@ -206,16 +216,16 @@ export function initScrollytelling(): void {
           if (counter) {
             gsap.fromTo(
               counter,
-              { autoAlpha: 0, y: 16 },
+              { autoAlpha: 0, y: 12 },
               {
                 autoAlpha: 1,
                 y: 0,
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 60%',
-                  end: 'top 28%',
-                  scrub: true,
+                  start: 'top 68%',
+                  end: 'top 30%',
+                  scrub: 0.85,
                 },
               },
             );
