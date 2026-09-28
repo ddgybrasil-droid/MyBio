@@ -39,7 +39,7 @@ const BASE_DISPERSION = 0.35;
 /** Transmission thickness in lens radii; the refracted offset scales with it. */
 const THICKNESS = 5;
 /** Path lengths (in THICKNESS units) over which light takes on one full attenuation tint. */
-const TINT_DEPTH = 0.3;
+const TINT_DEPTH = 0.18;
 
 /** Lens radius in CSS px for an anchor rect, per section composition. */
 const FIT: Record<AnchorId, (r: AnchorRect) => number> = {
@@ -100,13 +100,13 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
 
   const glass = createGlassMaterial({
     thickness: THICKNESS,
-    ior: 1.5,
+    ior: 1.52,
     dispersion: lite ? 0 : BASE_DISPERSION,
-    attenuation: '#c9d0cc',
-    envMapIntensity: 1,
-    clearcoat: 0.5,
+    attenuation: '#e4ece8',
+    envMapIntensity: 0.82,
+    clearcoat: 0.42,
   });
-  useHighlightToneMapping(glass, 1.15, { tint: new Color(0.03, 0.036, 0.034), strength: 0.9, power: 3 });
+  useHighlightToneMapping(glass, 1.1, { tint: new Color(0.045, 0.05, 0.046), strength: 0.62, power: 2.35 });
   const geometries: BufferGeometry[] = createLamellaGeometries(lite ? 'low' : 'high');
   const lens = new Group();
   const lamellae = geometries.map((geometry) => {

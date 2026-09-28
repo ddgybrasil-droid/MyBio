@@ -53,7 +53,7 @@ The selected Superdesign prompt, “One Product That Travels the Whole Page,” 
 - `focus`: `#006D67` — keyboard focus only.
 - `specular`: `rgba(255, 255, 255, 0.72)` — glass edge light.
 
-Platform colors stay inside official glyphs and their reveal states.
+Platform colors stay inside the optical marks (Discord pupils, Telegram facet, TikTok chromatic ghost), not filled store icons.
 
 ## Typography
 
@@ -79,11 +79,11 @@ Platform colors stay inside official glyphs and their reveal states.
 
 ### Clear lens
 
-For visual controls and icon pucks only: about 16% surface opacity, 16–20px blur, crisp edge highlight, mild refraction. Never place paragraphs on it.
+For visual controls and icon pucks only: a thin white lip, about 8px blur on fine pointers, and a dark lower rim so the disc reads as ground glass. Never place paragraphs on it. Coarse pointers and narrow screens drop the blur and use a solid mineral fill with the same rim.
 
 ### Regular glass
 
-For expanded social panels and experiment controls: 58–70% opacity, 24–30px blur, minimal distortion, guaranteed text contrast.
+For expanded social panels and experiment controls: about 88% mineral opacity, at most 10px blur, a top specular and a dark lower edge. Text must stay sharp. No nested glass, no heavy frost, no saturate filter.
 
 ### Solid fallback
 
@@ -131,18 +131,9 @@ Plain-text links/handles repeat in the footer.
 - Native scroll is always the source of truth. Entry reveals happen once; lens and camera states reverse with scroll.
 - Preserve the system cursor. A subtle optical follower is allowed only on fine pointers and never above prose or code.
 
-### TikTok morph
+### Contact pucks
 
-Resting state is a 48px circular glass lens containing the official TikTok glyph. On activation:
-
-1. Compress to 0.94 for 90ms.
-2. Extend seven lamellae horizontally into a 280px capsule over 320ms.
-3. Make the expanded material frostier as text enters.
-4. Move the glyph into a left socket.
-5. Reveal `@tg.abouthard` behind the moving glyph.
-6. Resolve `Open TikTok ↗` at the right edge.
-
-First tap expands; the explicit second action opens the profile. Escape or outside click collapses it. Reduced motion uses an instant width change and a 120ms text fade.
+Each channel is a 56px glass disc. The mark is an optical drawing, still recognizable: Discord as two apertures and a slit, Telegram as a folded prism, TikTok as a note with a chromatic ghost. First tap expands a panel from the disc; a second tap on the disc, the close control, Escape, or an outside click collapses it back. Discord copies `ascend_s7` when it opens. Telegram sweeps a specular glint across the capsule instead of moving the prism. TikTok grows a short account plate (handle, what the account is, open, copy) from the disc. Reduced motion snaps the panel open and shut.
 
 ## Responsive and capability tiers
 

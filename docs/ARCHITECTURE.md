@@ -71,7 +71,7 @@ The section provides its own header plus `<div id="lab-mount" data-lab-root></di
 
 ## Social interactions
 
-- Discord `@ascend_s7`: copies the handle (no stable profile URL exists for usernames). Clipboard fallback selects a read-only field.
-- Telegram `@abouthard`: `https://t.me/abouthard`.
-- TikTok `@tg.abouthard`: `https://www.tiktok.com/@tg.abouthard`. The icon morphs into an account capsule/card first; opening the profile is an explicit second action.
+- Discord `@ascend_s7`: copies the handle when the puck opens (no stable profile URL exists for usernames). The same puck toggles the capsule shut. Clipboard fallback selects a read-only field.
+- Telegram `@abouthard`: `https://t.me/abouthard`. The prism stays in the disc; a specular glint crosses the capsule.
+- TikTok `@tg.abouthard`: `https://www.tiktok.com/@tg.abouthard`. The disc scales into a short account plate (handle, blurb, open, copy). Opening the profile is an explicit second action. Escape, outside click, and the close control collapse every channel.
 - All handles are repeated as plain text in the footer.

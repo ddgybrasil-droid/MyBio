@@ -2,19 +2,54 @@ import { gsap } from 'gsap';
 import { state, triggerBurst, type SocialId } from '../state';
 import { scrollToElement } from './scroll';
 
+type Phase = 'closed' | 'open' | 'closing';
+
 interface SocialView {
   id: SocialId;
   wrapper: HTMLElement;
   trigger: HTMLButtonElement;
   details: HTMLElement;
-  timeline: gsap.core.Timeline | null;
-  ambient: gsap.core.Tween | null;
+  timeline: gsap.core.Timeline;
+  phase: Phase;
+  closedLabel: string;
+  openLabel: string;
 }
+
+const OPEN_LABEL: Record<SocialId, string> = {
+  discord: 'Закрыть Discord',
+  telegram: 'Закрыть Telegram',
+  tiktok: 'Закрыть TikTok',
+};
 
 function pointFor(element: Element, clientX?: number, clientY?: number): { x: number; y: number } {
   if (clientX && clientY) return { x: clientX, y: clientY };
   const rect = element.getBoundingClientRect();
   return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
+function buildTimeline(view: SocialView): gsap.core.Timeline {
+  const panel = view.details;
+  const content = panel.querySelectorAll<HTMLElement>('p, a, button');
+  const glint = panel.querySelector<HTMLElement>('.signal-glint');
+  const card = view.id === 'tiktok';
+  const timeline = gsap.timeline({ paused: true });
+
+  timeline
+    .set(panel, { transformOrigin: card ? '28px 28px' : '28px 50%' }, 0)
+    .fromTo(
+      panel,
+      { autoAlpha: 0, scaleX: card ? 0.18 : 0.16, scaleY: card ? 0.24 : 1 },
+      { autoAlpha: 1, scaleX: 1, scaleY: 1, duration: 0.36, ease: 'power3.inOut' },
+      0,
+    )
+    .set(content, { autoAlpha: 0 }, 0)
+    .to(content, { autoAlpha: 1, duration: 0.2, stagger: 0.04, ease: 'power2.out' }, 0.14);
+
+  if (glint) {
+    timeline.set(glint, { xPercent: -160 }, 0).to(glint, { xPercent: 420, duration: 0.52, ease: 'power1.inOut' }, 0.1);
+  }
+
+  return timeline;
 }
 
 export function initSocials(): void {
@@ -58,32 +93,44 @@ export function initSocials(): void {
     }, 1800);
   };
 
+  const clearMotion = (view: SocialView): void => {
+    const nodes: Element[] = [view.details, ...view.details.querySelectorAll('p, a, button, .signal-glint')];
+    gsap.set(nodes, { clearProps: 'all' });
+  };
+
   const setClosedSemantics = (view: SocialView): void => {
     view.wrapper.classList.remove('is-open');
     view.trigger.setAttribute('aria-expanded', 'false');
+    view.trigger.setAttribute('aria-label', view.closedLabel);
     view.details.setAttribute('inert', '');
-    view.ambient?.kill();
-    view.ambient = null;
     if (openId === view.id) {
       openId = null;
       state.activeSocial = null;
     }
   };
 
+  const finishClose = (view: SocialView): void => {
+    if (view.phase !== 'closing') return;
+    view.timeline.kill();
+    view.phase = 'closed';
+    setClosedSemantics(view);
+    clearMotion(view);
+    view.timeline = buildTimeline(view);
+  };
+
   const closeView = (view: SocialView, returnFocus: boolean): void => {
-    if (!view.wrapper.classList.contains('is-open')) return;
-    if (view.timeline && !state.reducedMotion) {
-      view.timeline.eventCallback('onReverseComplete', () => {
-        setClosedSemantics(view);
-        view.timeline?.eventCallback('onReverseComplete', null);
+    if (view.phase !== 'open') return;
+    view.phase = 'closing';
+    const timeline = view.timeline;
+    const canReverse = !state.reducedMotion && timeline.totalProgress() > 0.02;
+    if (canReverse) {
+      timeline.eventCallback('onReverseComplete', () => {
+        timeline.eventCallback('onReverseComplete', null);
+        finishClose(view);
       });
-      view.timeline.timeScale(1.65).reverse();
+      timeline.timeScale(1.25).reverse();
     } else {
-      gsap.to(view.details, {
-        autoAlpha: 0,
-        duration: state.reducedMotion ? 0.1 : 0.16,
-        onComplete: () => setClosedSemantics(view),
-      });
+      finishClose(view);
     }
     if (returnFocus) view.trigger.focus({ preventScroll: true });
   };
@@ -94,188 +141,34 @@ export function initSocials(): void {
     });
   };
 
-  const buildDiscordTimeline = (view: SocialView): gsap.core.Timeline => {
-    const capsule = view.details;
-    const group = view.trigger.querySelector<SVGGElement>('[data-icon-slices]');
-    const originalPath = group?.querySelector<SVGPathElement>('path');
-    if (group && originalPath && group.children.length === 1) {
-      for (let index = 1; index < 7; index += 1) group.append(originalPath.cloneNode(true));
-      [...group.querySelectorAll('path')].forEach((path, index) => {
-        const top = (index / 7) * 100;
-        const bottom = 100 - ((index + 1) / 7) * 100;
-        gsap.set(path, { clipPath: `inset(${top}% 0 ${bottom}% 0)` });
-      });
-    }
-    const slices = group ? [...group.querySelectorAll('path')] : [];
-    const duration = state.reducedMotion ? 0.1 : 0.34;
-    return gsap
-      .timeline({ paused: true })
-      .set(capsule, { visibility: 'visible' })
-      .to(capsule, { autoAlpha: 1, scaleX: 1, duration, ease: 'power3.out' })
-      .fromTo(
-        slices,
-        {
-          x: (index: number) => (index % 2 ? 9 : -8),
-          y: (index: number) => (index - 3) * 2,
-        },
-        {
-          x: 0,
-          y: 0,
-          duration: state.reducedMotion ? 0.1 : 0.3,
-          stagger: state.reducedMotion ? 0 : 0.025,
-          ease: 'power3.out',
-        },
-        0.06,
-      )
-      .from(capsule.querySelectorAll('p, button'), { autoAlpha: 0, x: 10, duration: 0.2, stagger: 0.04 }, 0.14);
-  };
-
-  const buildTelegramTimeline = (view: SocialView): gsap.core.Timeline => {
-    const capsule = view.details;
-    const plane = view.trigger.querySelector<SVGPathElement>('[data-plane]');
-    const trail = view.wrapper.querySelector<SVGPathElement>('.telegram-trail path');
-    const duration = state.reducedMotion ? 0.1 : 0.34;
-    const timeline = gsap
-      .timeline({ paused: true })
-      .set(capsule, { visibility: 'visible' })
-      .to(capsule, { autoAlpha: 1, scaleX: 1, duration, ease: 'power3.out' });
-
-    if (!state.reducedMotion) {
-      timeline
-        .to(trail, { strokeDashoffset: 0, duration: 0.38, ease: 'power2.out' }, 0)
-        .to(plane, { x: 95, y: -38, rotate: 24, duration: 0.22, ease: 'power2.out' }, 0)
-        .to(plane, { x: 232, y: 6, rotate: 6, duration: 0.24, ease: 'sine.inOut' }, 0.2)
-        .to(plane, { x: 0, y: 0, rotate: 0, duration: 0.33, ease: 'power3.inOut' }, 0.43)
-        .to(trail, { strokeDashoffset: -330, duration: 0.24, ease: 'power2.in' }, 0.5);
-    }
-
-    timeline.from(capsule.querySelectorAll('p, a'), { autoAlpha: 0, x: 12, duration: 0.2, stagger: 0.04 }, state.reducedMotion ? 0 : 0.42);
-    return timeline;
-  };
-
-  const socketOffset = (trigger: HTMLElement, card: HTMLElement): { x: number; y: number } => {
-    const socket = card.querySelector<HTMLElement>('.tiktok-card__socket');
-    if (!socket) return { x: 0, y: 0 };
-    const s = socket.getBoundingClientRect();
-    const t = trigger.getBoundingClientRect();
-    const currentX = Number(gsap.getProperty(trigger, 'x')) || 0;
-    const currentY = Number(gsap.getProperty(trigger, 'y')) || 0;
-    return {
-      x: s.left + s.width / 2 - (t.left + t.width / 2) + currentX,
-      y: s.top + s.height / 2 - (t.top + t.height / 2) + currentY,
-    };
-  };
-
-  const buildTikTokTimeline = (view: SocialView): gsap.core.Timeline => {
-    const card = view.details;
-    const glyphLayers = view.trigger.querySelectorAll<SVGPathElement>('[data-tiktok-glyph] path');
-    const lamellae = card.querySelectorAll<HTMLElement>('.tiktok-lamellae i');
-    const handle = card.querySelector<HTMLElement>('[data-tiktok-handle]');
-    const duration = state.reducedMotion ? 0.1 : 0.4;
-
-    if (handle && handle.children.length === 0) {
-      const text = handle.textContent ?? '';
-      handle.setAttribute('aria-label', text);
-      handle.textContent = '';
-      [...text].forEach((character) => {
-        const span = document.createElement('span');
-        span.textContent = character;
-        span.setAttribute('aria-hidden', 'true');
-        span.style.display = 'inline-block';
-        handle.append(span);
-      });
-    }
-
-    const timeline = gsap
-      .timeline({ paused: true })
-      .set(card, { visibility: 'visible' })
-      .to(view.trigger, { scale: 0.94, duration: state.reducedMotion ? 0 : 0.09, ease: 'power2.out' })
-      .to(
-        card,
-        {
-          autoAlpha: 1,
-          clipPath: 'inset(0% 0% 0% 0% round 28px 28px 6px 6px)',
-          duration,
-          ease: 'power4.inOut',
-        },
-        state.reducedMotion ? 0 : 0.08,
-      )
-      .to(
-        lamellae,
-        {
-          scaleX: 1,
-          duration: state.reducedMotion ? 0.1 : 0.3,
-          stagger: state.reducedMotion ? 0 : 0.025,
-          ease: 'power3.out',
-        },
-        0.1,
-      )
-      .to(
-        view.trigger,
-        {
-          x: () => socketOffset(view.trigger, card).x,
-          y: () => socketOffset(view.trigger, card).y,
-          scale: 0.77,
-          duration: state.reducedMotion ? 0 : 0.35,
-          ease: 'power3.inOut',
-        },
-        0.12,
-      )
-      .fromTo(
-        glyphLayers,
-        {
-          x: (index: number) => (index === 0 ? -4 : index === 1 ? 4 : 0),
-        },
-        {
-          x: 0,
-          duration: state.reducedMotion ? 0.1 : 0.28,
-          ease: 'power3.out',
-        },
-        0.35,
-      )
-      .from(
-        handle?.children ?? [],
-        {
-          autoAlpha: 0,
-          x: (index: number) => (index % 2 ? 3 : -3),
-          color: (index: number) => (index % 2 ? 'var(--brand-tiktok-red)' : 'var(--brand-tiktok-cyan)'),
-          duration: state.reducedMotion ? 0.1 : 0.22,
-          stagger: state.reducedMotion ? 0 : 0.028,
-        },
-        0.38,
-      )
-      .from(card.querySelectorAll('.mini-feed > div, .tiktok-card__actions'), { autoAlpha: 0, y: 12, duration: 0.24, stagger: 0.06 }, 0.48);
-
-    return timeline;
+  const showInstant = (view: SocialView): void => {
+    view.timeline.pause(0);
+    gsap.set(view.details, { autoAlpha: 1, scaleX: 1, scaleY: 1 });
+    gsap.set(view.details.querySelectorAll('p, a, button'), { autoAlpha: 1, x: 0 });
   };
 
   const openView = (view: SocialView, clientX?: number, clientY?: number): void => {
+    if (view.phase === 'open') return;
     closeOthers(view.id);
     const point = pointFor(view.trigger, clientX, clientY);
     triggerBurst(view.id, point.x, point.y);
     state.activeSocial = view.id;
     openId = view.id;
+    view.phase = 'open';
     view.wrapper.classList.add('is-open');
     view.trigger.setAttribute('aria-expanded', 'true');
+    view.trigger.setAttribute('aria-label', view.openLabel);
     view.details.removeAttribute('inert');
 
-    view.timeline?.kill();
-    if (view.id === 'discord') view.timeline = buildDiscordTimeline(view);
-    if (view.id === 'telegram') view.timeline = buildTelegramTimeline(view);
-    if (view.id === 'tiktok') view.timeline = buildTikTokTimeline(view);
-    view.timeline?.play(0);
-
-    if (view.id === 'tiktok' && !state.reducedMotion) {
-      const feedLines = view.details.querySelectorAll<HTMLElement>('.mini-feed i');
-      view.ambient = gsap.to(feedLines, {
-        xPercent: (index: number) => (index % 2 ? 16 : -16),
-        duration: 1.2,
-        stagger: 0.035,
-        repeat: -1,
-        yoyo: true,
-        ease: 'sine.inOut',
-      });
+    view.timeline.eventCallback('onReverseComplete', null);
+    if (state.reducedMotion) {
+      showInstant(view);
+      return;
     }
+
+    view.timeline.timeScale(1);
+    if (view.timeline.reversed() && view.timeline.totalProgress() > 0) view.timeline.play();
+    else view.timeline.play(0);
   };
 
   document.querySelectorAll<HTMLElement>('[data-social-reveal]').forEach((wrapper) => {
@@ -284,16 +177,29 @@ export function initSocials(): void {
     const details = wrapper.querySelector<HTMLElement>('[data-social-details]');
     if (!trigger || !details) return;
 
-    const view: SocialView = { id, wrapper, trigger, details, timeline: null, ambient: null };
+    const view: SocialView = {
+      id,
+      wrapper,
+      trigger,
+      details,
+      timeline: null as unknown as gsap.core.Timeline,
+      phase: 'closed',
+      closedLabel: trigger.getAttribute('aria-label') ?? OPEN_LABEL[id],
+      openLabel: OPEN_LABEL[id],
+    };
+    view.timeline = buildTimeline(view);
     views.set(id, view);
 
     trigger.addEventListener('click', (event) => {
+      if (view.phase === 'open') {
+        closeView(view, true);
+        return;
+      }
       if (id === 'discord') {
         void copyText('ascend_s7', 'Discord: ascend_s7 скопирован');
         showDiscordCopied();
       }
-      if (wrapper.classList.contains('is-open') && id !== 'discord') closeView(view, true);
-      else openView(view, event.clientX, event.clientY);
+      openView(view, event.clientX, event.clientY);
     });
 
     wrapper.addEventListener('pointerenter', () => {
