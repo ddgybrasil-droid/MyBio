@@ -153,6 +153,19 @@ export function initSocials(): void {
     return timeline;
   };
 
+  const socketOffset = (trigger: HTMLElement, card: HTMLElement): { x: number; y: number } => {
+    const socket = card.querySelector<HTMLElement>('.tiktok-card__socket');
+    if (!socket) return { x: 0, y: 0 };
+    const s = socket.getBoundingClientRect();
+    const t = trigger.getBoundingClientRect();
+    const currentX = Number(gsap.getProperty(trigger, 'x')) || 0;
+    const currentY = Number(gsap.getProperty(trigger, 'y')) || 0;
+    return {
+      x: s.left + s.width / 2 - (t.left + t.width / 2) + currentX,
+      y: s.top + s.height / 2 - (t.top + t.height / 2) + currentY,
+    };
+  };
+
   const buildTikTokTimeline = (view: SocialView): gsap.core.Timeline => {
     const card = view.details;
     const glyphLayers = view.trigger.querySelectorAll<SVGPathElement>('[data-tiktok-glyph] path');
@@ -200,8 +213,8 @@ export function initSocials(): void {
       .to(
         view.trigger,
         {
-          x: 18,
-          y: 72,
+          x: () => socketOffset(view.trigger, card).x,
+          y: () => socketOffset(view.trigger, card).y,
           scale: 0.77,
           duration: state.reducedMotion ? 0 : 0.35,
           ease: 'power3.inOut',

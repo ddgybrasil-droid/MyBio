@@ -104,7 +104,7 @@ export function initReveals(): void {
           const headings = gsap.utils.toArray<HTMLElement>('[data-reveal-heading]');
           headings.forEach((heading) => {
             const split = new SplitText(heading, {
-              type: 'lines,chars',
+              type: 'lines,words,chars',
               mask: 'lines',
               linesClass: 'split-line',
               charsClass: 'split-char',

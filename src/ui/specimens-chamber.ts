@@ -63,6 +63,8 @@ export function initSpecimenChamber(): void {
           const previousCopy = previous?.querySelector<HTMLElement>('.specimen__copy');
           const currentStage = current?.querySelector<HTMLElement>('.specimen__stage');
           const currentCopy = current?.querySelector<HTMLElement>('.specimen__copy');
+          const previousIndex = previous?.querySelector<HTMLElement>('.specimen__index');
+          const currentIndex = current?.querySelector<HTMLElement>('.specimen__index');
 
           timeline
             .set(current, { autoAlpha: 1, visibility: 'visible' })
@@ -77,6 +79,7 @@ export function initSpecimenChamber(): void {
               '<',
             )
             .to(previousCopy, { autoAlpha: 0, y: -42, duration: 0.38 }, '<0.08')
+            .to(previousIndex, { autoAlpha: 0, y: -14, duration: 0.24 }, '<')
             .fromTo(
               currentStage,
               {
@@ -98,6 +101,7 @@ export function initSpecimenChamber(): void {
               { autoAlpha: 1, y: 0, duration: 0.52 },
               '<0.16',
             )
+            .fromTo(currentIndex, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.3 }, '<')
             .set(previous, { autoAlpha: 0, visibility: 'hidden' })
             .to({}, { duration: 0.9 });
         }

@@ -370,13 +370,40 @@ main,
   width: 16%;
   margin-left: -2.25%;
   border: 1px solid var(--specular);
-  background: var(--glass-clear-bg);
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 17px,
+      color-mix(in srgb, var(--ink) 16%, transparent) 17px 18px
+    ),
+    color-mix(in srgb, var(--ink) 6%, var(--glass-clear-bg));
   box-shadow:
-    inset -1px 0 var(--line),
-    inset 1px 0 var(--specular);
+    inset 2px 0 color-mix(in srgb, var(--ink) 26%, transparent),
+    inset -2px 0 var(--specular),
+    inset 0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent);
   backdrop-filter: blur(var(--glass-clear-blur));
   clip-path: polygon(5% 2%, 95% 0, 100% 43%, 88% 46%, 100% 49%, 96% 100%, 2% 98%, 0 55%, 8% 52%, 0 49%);
 }
+
+.static-lens--hero::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 92%;
+  max-height: 100%;
+  aspect-ratio: 1;
+  border: 1px solid color-mix(in srgb, var(--ink) 24%, transparent);
+  border-radius: 50%;
+  content: '';
+  translate: -50% -50%;
+}
+
+.static-lens--hero i:nth-child(1),
+.static-lens--hero i:nth-child(7) { margin-block: 24%; }
+.static-lens--hero i:nth-child(2),
+.static-lens--hero i:nth-child(6) { margin-block: 11%; }
+.static-lens--hero i:nth-child(3),
+.static-lens--hero i:nth-child(5) { margin-block: 4%; }
 
 .static-lens i:nth-child(1) { transform: translateY(3%) skewY(-1deg); }
 .static-lens i:nth-child(2) { transform: translateY(-1%) skewY(0.6deg); }
@@ -891,6 +918,44 @@ main,
 .lab__optic > span:nth-of-type(6) { --i: 5; right: 2%; transform: skewX(6deg); }
 .lab__optic > span:nth-of-type(7) { --i: 6; right: 0; transform: skewX(-10deg); }
 
+.lab {
+  position: relative;
+}
+
+.lab__shutters {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  pointer-events: none;
+}
+
+.lab__shutters [data-lens-anchor] {
+  position: sticky;
+  top: var(--rail-height);
+  width: 100%;
+  height: calc(100svh - var(--rail-height));
+}
+
+.lab > .page-grid {
+  position: relative;
+  z-index: 1;
+}
+
+.webgl-ready .lab__optic {
+  display: none;
+}
+
+.webgl-ready #lab-mount {
+  margin-top: clamp(56px, 7vw, 96px);
+}
+
+/* The lens louvres occupy ~8.5vw at each edge (scene/lens.ts, FIT.lab). */
+@media (min-width: 900px) {
+  .webgl-ready .lab > .page-grid {
+    padding-inline: max(var(--gutter), calc(8.5vw + 20px));
+  }
+}
+
 #lab-mount {
   position: relative;
   z-index: 3;
@@ -1338,8 +1403,8 @@ html.js:not(.reduced-motion) [data-capability] {
   }
 
   .work.is-pinned .work__heading h2 {
-    max-width: 8ch;
-    font-size: clamp(2.2rem, 4.3vw, 4.7rem);
+    max-width: 24ch;
+    font-size: clamp(1.9rem, 2.7vw, 3.1rem);
   }
 
   .work.is-pinned .specimen-track {
@@ -1350,7 +1415,7 @@ html.js:not(.reduced-motion) [data-capability] {
     position: absolute;
     inset: 0;
     min-height: 100%;
-    padding-top: 155px;
+    padding-top: 200px;
     border: 0;
     visibility: hidden;
   }
@@ -1540,6 +1605,10 @@ html.js:not(.reduced-motion) [data-capability] {
   }
 
   .motion-toggle {
+    display: none;
+  }
+
+  .lens-data {
     display: none;
   }
 

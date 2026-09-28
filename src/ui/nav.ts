@@ -74,6 +74,8 @@ export function initNav(): void {
       trigger: section.element,
       start: 'top 46%',
       end: 'bottom 46%',
+      // Created before the #work pin; refreshing last lets the pin spacer shift these positions.
+      refreshPriority: -1,
       onEnter: () => setActive(index),
       onEnterBack: () => setActive(index),
     });
