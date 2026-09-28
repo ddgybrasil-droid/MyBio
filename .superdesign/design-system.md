@@ -57,13 +57,13 @@ Platform colors stay inside official glyphs and their reveal states.
 
 ## Typography
 
-- Display and body: Archivo Variable, locally hosted, `font-display: swap`.
+- Display and body: Onest Variable, locally hosted, `font-display: swap`. Archivo was replaced because it has no Cyrillic glyphs and the site copy is Russian.
 - Code and optical metadata: IBM Plex Mono.
 - Hero: `clamp(3.5rem, 10vw, 9.5rem)`, weight 520, line-height 0.86.
 - Section title: `clamp(2.25rem, 5vw, 5.25rem)`.
 - Body: `clamp(1rem, 0.4vw + 0.9rem, 1.25rem)`, line-height 1.55, max-width 62ch.
 - Metadata: 12–13px, letter-spacing 0.06em.
-- The hero may animate Archivo’s width axis from 84% to 100%. No other decorative type animation.
+- The hero may animate Onest’s weight axis subtly on scroll. No other decorative type animation.
 
 ## Grid and geometry
 

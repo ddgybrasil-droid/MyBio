@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="ASCEND / S7 — 3D, графика реального времени, шейдеры и творческий код."
+    />
+    <meta name="theme-color" content="#ECEBE5" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <title>ASCEND / S7 — Optical Archive</title>
+  </head>
+  <body>
+    <canvas id="lens-canvas" aria-hidden="true"></canvas>
+    <a class="skip-link" href="#hero">Перейти к содержанию</a>
+
+    <header class="optical-nav" data-optical-nav>
+      <nav class="optical-nav__inner" aria-label="Навигация по оптическому архиву">
+        <a class="optical-nav__brand" href="#hero">ASCEND / S7</a>
+        <p class="optical-nav__current" aria-live="polite">
+          <span data-current-section>Калибровка</span>
+          <span data-section-count>01—05</span>
+        </p>
+        <ol class="optical-nav__ticks" aria-label="Прогресс по разделам">
+          <li><a class="is-active" href="#hero" data-progress-tick aria-label="Калибровка"></a></li>
+          <li><a href="#about" data-progress-tick aria-label="Заметки оператора"></a></li>
+          <li><a href="#work" data-progress-tick aria-label="Камера образцов"></a></li>
+          <li><a href="#lab" data-progress-tick aria-label="Открытый стенд"></a></li>
+          <li><a href="#contact" data-progress-tick aria-label="Сигнал"></a></li>
+        </ol>
+        <div class="optical-nav__actions">
+          <button class="motion-toggle" type="button" data-motion-toggle aria-pressed="false">
+            Движение: <span data-motion-label>вкл</span>
+          </button>
+          <a class="optical-nav__contact" href="#contact">Связаться</a>
+        </div>
+      </nav>
+      <span class="optical-nav__progress" aria-hidden="true" data-scroll-progress></span>
+    </header>
+
+    <main>
+      <section id="hero" class="hero section" data-section data-section-label="Калибровка">
+        <div class="hero__grid page-grid">
+          <div class="hero__copy">
+            <p class="eyebrow" data-hero-eyebrow>Optical archive / active calibration</p>
+            <h1 class="hero__title" data-hero-title>Цифровая форма,<br />пойманная в движении.</h1>
+            <p class="hero__lede" data-hero-lede>
+              ASCEND / S7 создаёт 3D-объекты и браузерные системы, где движение раскрывает
+              устройство формы, а не прячет его.
+            </p>
+          </div>
+
+          <div class="hero__lens-field">
+            <div data-lens-anchor="hero" aria-hidden="true"></div>
+            <div class="static-lens static-lens--hero" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+            <p class="lens-data" aria-hidden="true">
+              <span>Rotation limit / 16°</span>
+              <span>Split planes / 07</span>
+              <span>State / assembled</span>
+            </p>
+          </div>
+        </div>
+
+        <aside class="hero-socials" aria-label="Контакты">
+          <p class="hero-socials__label">Signal / 03</p>
+          <button class="social-puck social-puck--discord" type="button" data-hero-social="discord" aria-label="Перейти к Discord @ascend_s7">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.7 5.3A16 16 0 0 0 15.8 4l-.5 1.1a14 14 0 0 0-6.6 0L8.2 4a16 16 0 0 0-3.9 1.3C1.8 9 1.1 12.5 1.5 16a16 16 0 0 0 4.8 2.5l1.2-1.7-1.8-.9.4-.3a11.5 11.5 0 0 0 11.8 0l.4.3-1.8.9 1.2 1.7a16 16 0 0 0 4.8-2.5c.5-4.1-.8-7.6-2.8-10.7ZM8.6 14.4c-1.2 0-2.1-1.1-2.1-2.4s.9-2.4 2.1-2.4c1.2 0 2.2 1.1 2.1 2.4 0 1.3-.9 2.4-2.1 2.4Zm6.8 0c-1.2 0-2.1-1.1-2.1-2.4s.9-2.4 2.1-2.4c1.2 0 2.2 1.1 2.1 2.4 0 1.3-.9 2.4-2.1 2.4Z"/></svg>
+          </button>
+          <button class="social-puck social-puck--telegram" type="button" data-hero-social="telegram" aria-label="Перейти к Telegram @abouthard">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.7 3.3-3.2 15c-.2 1.1-.9 1.4-1.8.9l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9-8.1c.4-.4-.1-.6-.6-.2L6.1 12.1 1.3 10.6c-1-.3-1.1-1 .2-1.5L20 2c.9-.3 1.9.2 1.7 1.3Z"/></svg>
+          </button>
+          <button class="social-puck social-puck--tiktok" type="button" data-hero-social="tiktok" aria-label="Перейти к TikTok @tg.abouthard">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path class="tiktok-cyan" d="M15.3 2h3c.2 1.7 1.2 3.1 2.7 3.9v3.2a8.8 8.8 0 0 1-2.8-.7v6.3A7.3 7.3 0 1 1 12 7.5v3.3a4 4 0 1 0 2.8 3.9V2h.5Z"/><path class="tiktok-red" d="M14.3 2h3c.2 1.7 1.2 3.1 2.7 3.9v3.2a8.8 8.8 0 0 1-2.8-.7v6.3A7.3 7.3 0 1 1 11 7.5v3.3a4 4 0 1 0 2.8 3.9V2h.5Z"/><path d="M14.8 2h2.5c.2 1.5 1.1 2.8 2.7 3.6v2.8a7.4 7.4 0 0 1-2.8-.8v7.1a6.3 6.3 0 1 1-6.2-6.3v2.9a3.4 3.4 0 1 0 3.8 3.4V2Z"/></svg>
+          </button>
+        </aside>
+
+        <p class="scroll-cue" aria-hidden="true"><span></span>Прокрутить для фокусировки</p>
+        <div class="hero__wordmark" aria-hidden="true" data-wordmark>
+          <span>A</span><span>S</span><span>C</span><span>E</span><span>N</span><span>D</span>
+          <span class="wordmark-gap">/</span><span>S</span><span>7</span>
+        </div>
+      </section>
+
+      <section id="about" class="about section" data-section data-section-label="Заметки оператора">
+        <div class="page-grid">
+          <header class="section-heading about__heading">
+            <p class="eyebrow">02 / Заметки оператора</p>
+            <h2 data-reveal-heading>Сначала объект.<br />Потом эффект.</h2>
+          </header>
+          <div class="about__bio" data-entry-reveal>
+            <p>
+              Работаю с 3D, графикой реального времени, шейдерами и творческим кодом.
+              Начинаю не с эффекта, а с поведения материала, ясного ограничения и честного
+              способа показать результат в браузере.
+            </p>
+          </div>
+          <div class="capabilities" aria-label="Направления работы">
+            <div class="capability" data-capability>
+              <span>01—03</span><p>3D-направление<br />Сценические системы</p>
+            </div>
+            <div class="capability" data-capability>
+              <span>04—05</span><p>Creative development<br />Модели взаимодействия</p>
+            </div>
+            <div class="capability" data-capability>
+              <span>06—07</span><p>Шейдеры<br />Браузерные опыты</p>
+            </div>
+          </div>
+          <div class="about__lens">
+            <div data-lens-anchor="about" aria-hidden="true"></div>
+            <div class="static-lens static-lens--exploded" aria-hidden="true">
+              <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="work" class="work section" data-section data-section-label="Камера образцов">
+        <div class="work__inner">
+          <header class="section-heading work__heading">
+            <p class="eyebrow">03 / Камера образцов</p>
+            <h2 data-reveal-heading>Три исследования.<br />Три оптических режима.</h2>
+          </header>
+
+          <div class="specimen-track" data-specimen-track>
+            <article class="specimen is-active" data-specimen-card data-kind="lens">
+              <div class="specimen__index"><span>S01</span><span>Split optic</span></div>
+              <div class="specimen__stage" data-specimen="lens" tabindex="0" role="img" aria-label="Интерактивная 3D-модель S7 Split Lens из семи стеклянных ламелей">
+                <svg class="specimen__fallback" viewBox="0 0 800 600" aria-hidden="true">
+                  <g fill="none" stroke="currentColor"><path d="M145 454h510M198 486h404"/><path d="m230 155 76-18 18 303-76 18zM309 132l76-9 7 303-76 10zM389 120h76v303h-76zM469 123l76 9-7 303-76-10zM548 137l76 18-18 303-76-18z"/><circle cx="400" cy="292" r="185"/></g>
+                </svg>
+                <span class="specimen__axis" aria-hidden="true"></span>
+              </div>
+              <div class="specimen__copy">
+                <p class="specimen__meta">2026 / Three.js · MeshPhysicalMaterial · GLSL</p>
+                <h3>S7 Split Lens</h3>
+                <p>Семь стеклянных ламелей, собранных в одну оптику. Каждая пластина преломляет мир с собственным смещением.</p>
+                <p class="specimen__hint">Тяни, чтобы вращать · ← → · + − · 0</p>
+                <div class="specimen__controls">
+                  <button type="button" data-specimen-action="wireframe" aria-pressed="false">Каркас</button>
+                  <button type="button" data-specimen-action="reset">Сбросить вид</button>
+                  <button type="button" data-specimen-action="download" data-file="s7-split-lens.glb">Скачать .glb</button>
+                </div>
+                <p class="specimen__status" data-specimen-status aria-live="polite"></p>
+              </div>
+            </article>
+
+            <article class="specimen" data-specimen-card data-kind="knot">
+              <div class="specimen__index"><span>S02</span><span>Transmission knot</span></div>
+              <div class="specimen__stage" data-specimen="knot" tabindex="0" role="img" aria-label="Интерактивная 3D-модель стеклянного Chromatic Knot">
+                <svg class="specimen__fallback" viewBox="0 0 800 600" aria-hidden="true">
+                  <g fill="none" stroke="currentColor"><path d="M171 300c0-139 184-219 294-135 115 87-9 282-131 198-87-60 37-210 150-151 109 57 85 222-48 253-143 34-284-59-265-165Z"/><path d="M198 300c-9-101 127-173 218-117 112 68 25 242-84 179-78-45-10-164 91-141 97 23 103 145 24 199-103 71-239-9-249-120Z"/></g>
+                </svg>
+                <span class="specimen__axis" aria-hidden="true"></span>
+              </div>
+              <div class="specimen__copy">
+                <p class="specimen__meta">2026 / Three.js · Transmission · Dispersion</p>
+                <h3>Chromatic Knot</h3>
+                <p>Тор-узел из толстого стекла с дисперсией: свет раскладывается на спектр ровно там, где узел закручивается сильнее всего.</p>
+                <p class="specimen__hint">Тяни, чтобы вращать · ← → · + − · 0</p>
+                <div class="specimen__controls">
+                  <button type="button" data-specimen-action="wireframe" aria-pressed="false">Каркас</button>
+                  <button type="button" data-specimen-action="reset">Сбросить вид</button>
+                  <button type="button" data-specimen-action="download" data-file="chromatic-knot.glb">Скачать .glb</button>
+                </div>
+                <p class="specimen__status" data-specimen-status aria-live="polite"></p>
+              </div>
+            </article>
+
+            <article class="specimen" data-specimen-card data-kind="relief">
+              <div class="specimen__index"><span>S03</span><span>Contour field</span></div>
+              <div class="specimen__stage" data-specimen="relief" tabindex="0" role="img" aria-label="Интерактивная 3D-модель процедурного Contour Relief">
+                <svg class="specimen__fallback" viewBox="0 0 800 600" aria-hidden="true">
+                  <g fill="none" stroke="currentColor"><path d="M119 444c70-61 144-27 203-83 60-57 70-190 183-194 80-3 113 61 176 36M119 410c65-51 137-18 189-70 60-60 66-180 172-184 89-4 123 70 201 50M119 374c58-38 125-8 176-58 57-57 64-161 158-170 99-9 137 84 228 61M119 337c53-26 113 6 162-43 55-55 61-143 147-157 106-17 149 100 253 70M119 298c50-13 98 23 149-27 52-51 61-123 136-143 110-29 163 115 277 79"/></g>
+                </svg>
+                <span class="specimen__axis" aria-hidden="true"></span>
+              </div>
+              <div class="specimen__copy">
+                <p class="specimen__meta">2026 / Three.js · Vertex displacement · Contour shader</p>
+                <h3>Contour Relief</h3>
+                <p>Процедурный рельеф, прочерченный изолиниями. Рельеф медленно дышит, а изолинии остаются точными на любой высоте.</p>
+                <p class="specimen__hint">Тяни, чтобы вращать · ← → · + − · 0</p>
+                <div class="specimen__controls">
+                  <button type="button" data-specimen-action="wireframe" aria-pressed="false">Каркас</button>
+                  <button type="button" data-specimen-action="reset">Сбросить вид</button>
+                  <button type="button" data-specimen-action="download" data-file="contour-relief.glb">Скачать .glb</button>
+                </div>
+                <p class="specimen__status" data-specimen-status aria-live="polite"></p>
+              </div>
+            </article>
+          </div>
+          <div class="specimen-counter" aria-hidden="true"><span data-specimen-counter>01</span> / 03</div>
+        </div>
+      </section>
+
+      <section id="lab" class="lab section" data-section data-section-label="Открытый стенд">
+        <div class="lab__shutters" aria-hidden="true"><div data-lens-anchor="lab"></div></div>
+        <div class="page-grid">
+          <header class="section-heading lab__heading">
+            <p class="eyebrow">04 / Открытый стенд</p>
+            <h2 data-reveal-heading>Ничего не запускается<br />без спроса.</h2>
+            <p data-entry-reveal>Шейдер можно править прямо здесь — он пересобирается на лету. Тяжёлые 3D-опыты стартуют только по кнопке, в изолированной песочнице, и каждый забирается одним файлом.</p>
+          </header>
+          <div class="lab__optic" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+          </div>
+          <div id="lab-mount" data-lab-root aria-live="polite">
+            <p class="lab__loading">Стенд калибруется<span aria-hidden="true"> / / /</span></p>
+          </div>
+        </div>
+      </section>
+
+      <section id="contact" class="contact section" data-section data-section-label="Сигнал">
+        <div class="page-grid">
+          <header class="section-heading contact__heading">
+            <p class="eyebrow">05 / Сигнал</p>
+            <h2 data-reveal-heading>Выберите канал.<br />Подайте ясный сигнал.</h2>
+          </header>
+          <div class="contact__lens" data-lens-anchor="contact" aria-hidden="true"></div>
+
+          <div class="contact-rail" data-entry-reveal>
+            <article class="social-reveal social-reveal--discord" data-social-reveal="discord">
+              <button class="social-puck social-puck--discord" type="button" data-social-trigger="discord" aria-expanded="false" aria-controls="discord-details" aria-label="Скопировать Discord @ascend_s7">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><g data-icon-slices><path d="M19.7 5.3A16 16 0 0 0 15.8 4l-.5 1.1a14 14 0 0 0-6.6 0L8.2 4a16 16 0 0 0-3.9 1.3C1.8 9 1.1 12.5 1.5 16a16 16 0 0 0 4.8 2.5l1.2-1.7-1.8-.9.4-.3a11.5 11.5 0 0 0 11.8 0l.4.3-1.8.9 1.2 1.7a16 16 0 0 0 4.8-2.5c.5-4.1-.8-7.6-2.8-10.7ZM8.6 14.4c-1.2 0-2.1-1.1-2.1-2.4s.9-2.4 2.1-2.4c1.2 0 2.2 1.1 2.1 2.4 0 1.3-.9 2.4-2.1 2.4Zm6.8 0c-1.2 0-2.1-1.1-2.1-2.4s.9-2.4 2.1-2.4c1.2 0 2.2 1.1 2.1 2.4 0 1.3-.9 2.4-2.1 2.4Z"/></g></svg>
+              </button>
+              <div class="social-capsule" id="discord-details" data-social-details inert>
+                <span class="social-capsule__socket" aria-hidden="true"></span>
+                <p><small>Discord / copy</small><strong>@ascend_s7</strong></p>
+                <button type="button" data-copy-discord><span data-copy-label>Скопировать</span></button>
+              </div>
+            </article>
+
+            <article class="social-reveal social-reveal--telegram" data-social-reveal="telegram">
+              <button class="social-puck social-puck--telegram" type="button" data-social-trigger="telegram" aria-expanded="false" aria-controls="telegram-details" aria-label="Показать Telegram @abouthard">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path data-plane d="m21.7 3.3-3.2 15c-.2 1.1-.9 1.4-1.8.9l-4.9-3.6-2.4 2.3c-.3.3-.5.5-1 .5l.4-5 9-8.1c.4-.4-.1-.6-.6-.2L6.1 12.1 1.3 10.6c-1-.3-1.1-1 .2-1.5L20 2c.9-.3 1.9.2 1.7 1.3Z"/></svg>
+              </button>
+              <svg class="telegram-trail" viewBox="0 0 280 80" preserveAspectRatio="none" aria-hidden="true"><path d="M8 60C78-6 170 5 254 39"/></svg>
+              <div class="social-capsule" id="telegram-details" data-social-details inert>
+                <span class="social-capsule__socket" aria-hidden="true"></span>
+                <p><small>Telegram / direct</small><strong>@abouthard</strong></p>
+                <a href="https://t.me/abouthard" target="_blank" rel="noreferrer">Написать ↗</a>
+                <button class="social-close" type="button" data-social-close aria-label="Закрыть Telegram">×</button>
+              </div>
+            </article>
+
+            <article class="social-reveal social-reveal--tiktok" data-social-reveal="tiktok">
+              <button class="social-puck social-puck--tiktok" type="button" data-social-trigger="tiktok" aria-expanded="false" aria-controls="tiktok-details" aria-label="Показать TikTok @tg.abouthard">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><g data-tiktok-glyph><path class="tiktok-cyan" d="M15.3 2h3c.2 1.7 1.2 3.1 2.7 3.9v3.2a8.8 8.8 0 0 1-2.8-.7v6.3A7.3 7.3 0 1 1 12 7.5v3.3a4 4 0 1 0 2.8 3.9V2h.5Z"/><path class="tiktok-red" d="M14.3 2h3c.2 1.7 1.2 3.1 2.7 3.9v3.2a8.8 8.8 0 0 1-2.8-.7v6.3A7.3 7.3 0 1 1 11 7.5v3.3a4 4 0 1 0 2.8 3.9V2h.5Z"/><path d="M14.8 2h2.5c.2 1.5 1.1 2.8 2.7 3.6v2.8a7.4 7.4 0 0 1-2.8-.8v7.1a6.3 6.3 0 1 1-6.2-6.3v2.9a3.4 3.4 0 1 0 3.8 3.4V2Z"/></g></svg>
+              </button>
+              <div class="tiktok-card" id="tiktok-details" data-social-details inert>
+                <div class="tiktok-lamellae" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                <button class="social-close" type="button" data-social-close aria-label="Закрыть TikTok">×</button>
+                <header>
+                  <span class="tiktok-card__socket" aria-hidden="true"></span>
+                  <div><small>TikTok / optical feed</small><strong data-tiktok-handle>@tg.abouthard</strong></div>
+                </header>
+                <div class="mini-feed" aria-hidden="true">
+                  <div><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                  <div><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                  <div><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+                </div>
+                <div class="tiktok-card__actions">
+                  <a href="https://www.tiktok.com/@tg.abouthard" target="_blank" rel="noreferrer">Открыть профиль ↗</a>
+                  <button type="button" data-copy-tiktok>Скопировать ник</button>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <p class="contact-status" data-social-status role="status" aria-live="polite"></p>
+          <footer class="site-footer">
+            <p>ASCEND / S7 <span>© 2026</span></p>
+            <ul>
+              <li>Discord <button type="button" data-footer-copy>@ascend_s7</button></li>
+              <li><a href="https://t.me/abouthard" target="_blank" rel="noreferrer">Telegram @abouthard</a></li>
+              <li><a href="https://www.tiktok.com/@tg.abouthard" target="_blank" rel="noreferrer">TikTok @tg.abouthard</a></li>
+            </ul>
+          </footer>
+        </div>
+      </section>
+    </main>
+
+    <div class="optical-cursor" aria-hidden="true" data-optical-cursor><span></span></div>
+    <input class="clipboard-fallback" data-clipboard-fallback readonly aria-hidden="true" tabindex="-1" />
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

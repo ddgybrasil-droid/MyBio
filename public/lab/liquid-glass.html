@@ -1,0 +1,380 @@
+<!doctype html>
+<!--
+  Жидкое стекло — S7 Open Bench · эксперимент 02
+  Автор: ASCEND / S7 · Лицензия: MIT
+
+  Капля толстого стекла (MeshPhysicalMaterial: transmission + dispersion).
+  Вершины смещаются трёхмерным градиентным шумом прямо в вершинном шейдере
+  (onBeforeCompile), нормали пересчитываются по двум соседним точкам.
+  Центр капли идёт за указателем на пружине, скорость вытягивает хвост,
+  а ближняя к указателю сторона тянется к нему.
+
+  Управление: ведите указателем или пальцем — капля тянется следом;
+  нажатие — упругий импульс.
+  Встраивание: окно принимает postMessage { type: 'pause' | 'resume' }.
+  Запуск: откройте файл в браузере с WebGL2 (three.js грузится с jsDelivr).
+-->
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Жидкое стекло — S7 Open Bench</title>
+<style>
+  :root { color-scheme: light; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #ecebe5; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .caption {
+    position: fixed; left: 16px; bottom: 16px; display: grid; gap: 2px; max-width: calc(100% - 32px);
+    padding: 10px 14px; border-radius: 6px; pointer-events: none;
+    font: 500 14px/1.3 'Onest Variable', 'Onest', system-ui, sans-serif; color: #151816;
+    background: rgba(247, 246, 240, 0.66); -webkit-backdrop-filter: blur(28px); backdrop-filter: blur(28px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), inset 0 0 0 1px rgba(21, 24, 22, 0.12);
+  }
+  .caption span { font: 500 11px/1.4 'IBM Plex Mono', ui-monospace, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: #5b615d; }
+  .caption.failed { pointer-events: auto; }
+  @media (prefers-reduced-transparency: reduce) {
+    .caption { background: #f7f6f0; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: inset 0 0 0 1px rgba(21, 24, 22, 0.32); }
+  }
+</style>
+<script>
+  // Если модуль не стартовал (нет сети или WebGL2), показать причину и сообщить родителю.
+  window.__s7Fail = function (message) {
+    var cap = document.querySelector('.caption span');
+    if (cap) cap.textContent = message;
+    if (window.parent !== window) window.parent.postMessage({ source: 's7-lab', type: 'error', message: message }, '*');
+  };
+  window.__s7Watchdog = setTimeout(function () {
+    if (!window.__s7Started) window.__s7Fail('Не удалось загрузить three.js с cdn.jsdelivr.net');
+  }, 15000);
+</script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div class="caption" aria-live="polite"><strong>Жидкое стекло</strong><span>S7 · 02 — ведите указателем, нажатие — импульс</span></div>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+window.__s7Started = true;
+clearTimeout(window.__s7Watchdog);
+
+const PAPER = 0xecebe5;
+const INK = 0x151816;
+const embedded = window.parent !== window;
+const notify = (type, message) => embedded && window.parent.postMessage({ source: 's7-lab', type, message }, '*');
+
+if (!document.createElement('canvas').getContext('webgl2')) {
+  window.__s7Fail('Нужен браузер с поддержкой WebGL2');
+  throw new Error('WebGL2 unavailable');
+}
+
+const coarse = matchMedia('(pointer: coarse)').matches;
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+document.body.prepend(renderer.domElement);
+renderer.domElement.setAttribute('aria-label', 'Стеклянная капля, следующая за указателем');
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(PAPER);
+const pmrem = new THREE.PMREMGenerator(renderer);
+const room = new RoomEnvironment();
+scene.environment = pmrem.fromScene(room, 0.04).texture;
+room.dispose?.();
+scene.environmentIntensity = 1.0;
+
+const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 60);
+
+/* ---------- Ruled backdrop ---------- */
+function ruledTile() {
+  const size = 512;
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const g = c.getContext('2d');
+  g.fillStyle = '#ecebe5';
+  g.fillRect(0, 0, size, size);
+  for (let i = 0; i < 16; i++) {
+    const y = i * 32 + 0.5;
+    g.fillStyle = i % 4 === 0 ? 'rgba(21,24,22,0.34)' : 'rgba(21,24,22,0.16)';
+    g.fillRect(0, y - (i % 4 === 0 ? 1 : 0.5), size, i % 4 === 0 ? 2 : 1);
+  }
+  for (let x = 0; x < size; x += 16) {
+    g.fillStyle = 'rgba(21,24,22,0.3)';
+    g.fillRect(x, 0, 1, x % 128 === 0 ? 18 : 8);
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+  tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return tex;
+}
+
+const tile = ruledTile();
+tile.repeat.set(30 / 1.6, 18 / 1.6);
+const backdrop = new THREE.Mesh(
+  new THREE.PlaneGeometry(30, 18),
+  new THREE.MeshBasicMaterial({ map: tile, toneMapped: false }),
+);
+backdrop.position.z = -2.4;
+scene.add(backdrop);
+
+const inkMat = new THREE.MeshBasicMaterial({ color: INK, toneMapped: false });
+const target = new THREE.Group();
+target.add(new THREE.Mesh(new THREE.RingGeometry(1.18, 1.2, 160), inkMat));
+target.add(new THREE.Mesh(new THREE.RingGeometry(0.86, 0.87, 160), inkMat));
+target.add(new THREE.Mesh(new THREE.PlaneGeometry(2.8, 0.012), inkMat));
+target.add(new THREE.Mesh(new THREE.PlaneGeometry(0.012, 2.8), inkMat));
+target.position.set(-0.35, 0.1, -2.38);
+scene.add(target);
+
+const disc = new THREE.Mesh(new THREE.CircleGeometry(0.42, 96), inkMat);
+disc.position.set(0.9, -0.45, -2.37);
+scene.add(disc);
+
+/* ---------- Props behind the glass ---------- */
+const alu = new THREE.MeshStandardMaterial({ color: 0xd6d8d5, metalness: 1, roughness: 0.26 });
+const lamellae = new THREE.Group();
+const slab = new THREE.BoxGeometry(0.14, 2.9, 0.04);
+for (let i = 0; i < 7; i++) {
+  const m = new THREE.Mesh(slab, alu);
+  m.position.set(-1.35 + i * 0.45, 0, -1.4);
+  m.rotation.y = 0.55 + i * 0.06;
+  lamellae.add(m);
+}
+lamellae.position.x = 0.2;
+scene.add(lamellae);
+
+const ring = new THREE.Mesh(
+  new THREE.TorusGeometry(0.5, 0.03, 32, 160),
+  new THREE.MeshStandardMaterial({ color: INK, metalness: 0.2, roughness: 0.35 }),
+);
+ring.position.set(2.1, 1.05, -0.9);
+ring.rotation.set(0.4, -0.6, 0);
+scene.add(ring);
+
+const bead = new THREE.Mesh(
+  new THREE.SphereGeometry(0.26, 64, 32),
+  new THREE.MeshPhysicalMaterial({ color: INK, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.08 }),
+);
+bead.position.set(-2.15, -0.95, -0.7);
+scene.add(bead);
+
+/* ---------- The glass blob ---------- */
+const uniforms = {
+  uTime: { value: 0 },
+  uPointer: { value: new THREE.Vector3(0, 0, 3) },
+  uVel: { value: new THREE.Vector3() },
+  uReach: { value: 0 },
+  uPulse: { value: 0 },
+};
+
+const glass = new THREE.MeshPhysicalMaterial({
+  color: 0xffffff,
+  metalness: 0,
+  roughness: 0.03,
+  transmission: 1,
+  thickness: 1.2,
+  ior: 1.5,
+  dispersion: 1.4,
+  specularIntensity: 1,
+  attenuationColor: new THREE.Color(0xf2f7f4),
+  attenuationDistance: 3.5,
+  envMapIntensity: 1.0,
+});
+
+glass.onBeforeCompile = (shader) => {
+  Object.assign(shader.uniforms, uniforms);
+  shader.vertexShader = shader.vertexShader
+    .replace(
+      '#include <common>',
+      `#include <common>
+      uniform float uTime;
+      uniform vec3 uPointer;
+      uniform vec3 uVel;
+      uniform float uReach;
+      uniform float uPulse;
+
+      vec3 s7Hash(vec3 p) {
+        p = vec3(dot(p, vec3(127.1, 311.7, 74.7)), dot(p, vec3(269.5, 183.3, 246.1)), dot(p, vec3(113.5, 271.9, 124.6)));
+        return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
+      }
+
+      float s7Noise(vec3 p) {
+        vec3 i = floor(p);
+        vec3 f = fract(p);
+        vec3 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+        float n000 = dot(s7Hash(i), f);
+        float n100 = dot(s7Hash(i + vec3(1.0, 0.0, 0.0)), f - vec3(1.0, 0.0, 0.0));
+        float n010 = dot(s7Hash(i + vec3(0.0, 1.0, 0.0)), f - vec3(0.0, 1.0, 0.0));
+        float n110 = dot(s7Hash(i + vec3(1.0, 1.0, 0.0)), f - vec3(1.0, 1.0, 0.0));
+        float n001 = dot(s7Hash(i + vec3(0.0, 0.0, 1.0)), f - vec3(0.0, 0.0, 1.0));
+        float n101 = dot(s7Hash(i + vec3(1.0, 0.0, 1.0)), f - vec3(1.0, 0.0, 1.0));
+        float n011 = dot(s7Hash(i + vec3(0.0, 1.0, 1.0)), f - vec3(0.0, 1.0, 1.0));
+        float n111 = dot(s7Hash(i + vec3(1.0, 1.0, 1.0)), f - vec3(1.0, 1.0, 1.0));
+        return mix(
+          mix(mix(n000, n100, u.x), mix(n010, n110, u.x), u.y),
+          mix(mix(n001, n101, u.x), mix(n011, n111, u.x), u.y),
+          u.z);
+      }
+
+      vec3 s7Displace(vec3 n) {
+        float t = uTime;
+        float d = s7Noise(n * 0.95 + vec3(0.0, t * 0.2, t * 0.1)) * 0.24
+                + s7Noise(n * 2.1 - vec3(t * 0.27, 0.0, t * 0.15)) * 0.045;
+        d += uPulse * sin(n.y * 9.0 - t * 12.0) * 0.07;
+        vec3 q = n * (1.0 + d);
+
+        vec3 toP = uPointer - q;
+        float dist = length(toP);
+        vec3 dir = toP / max(dist, 1e-3);
+        float facing = max(dot(n, dir), 0.0);
+        q += dir * pow(facing, 5.0) * uReach * 0.5 * smoothstep(4.0, 0.9, dist);
+
+        float speed = length(uVel);
+        if (speed > 1e-4) {
+          float lead = dot(n, uVel / speed);
+          q -= uVel * 0.17 * (0.5 - 0.5 * lead);
+        }
+        return q;
+      }`,
+    )
+    .replace(
+      '#include <beginnormal_vertex>',
+      `vec3 s7Base = normalize(position);
+      vec3 s7Tan = normalize(abs(s7Base.y) < 0.99 ? cross(s7Base, vec3(0.0, 1.0, 0.0)) : cross(s7Base, vec3(1.0, 0.0, 0.0)));
+      vec3 s7Bit = normalize(cross(s7Base, s7Tan));
+      vec3 s7Pos = s7Displace(s7Base);
+      vec3 s7A = s7Displace(normalize(s7Base + s7Tan * 0.01));
+      vec3 s7B = s7Displace(normalize(s7Base + s7Bit * 0.01));
+      vec3 objectNormal = normalize(cross(s7A - s7Pos, s7B - s7Pos));`,
+    )
+    .replace('#include <begin_vertex>', 'vec3 transformed = s7Pos;');
+};
+
+const detail = coarse || window.innerWidth < 720 ? 28 : 44;
+const blob = new THREE.Mesh(new THREE.IcosahedronGeometry(1, detail), glass);
+blob.frustumCulled = false;
+scene.add(blob);
+
+/* ---------- Interaction ---------- */
+const raycaster = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+const pointerWorld = new THREE.Vector3();
+let pointerActive = false;
+let lastPointerTime = -1e9;
+
+function updatePointer(event) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  ndc.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+  raycaster.setFromCamera(ndc, camera);
+  raycaster.ray.intersectPlane(plane, pointerWorld);
+  pointerActive = true;
+  lastPointerTime = performance.now();
+}
+
+renderer.domElement.addEventListener('pointermove', updatePointer);
+renderer.domElement.addEventListener('pointerdown', (event) => {
+  updatePointer(event);
+  pulse = 1;
+  velocity.addScaledVector(pointerWorld.clone().sub(blob.position).normalize(), 1.4);
+});
+renderer.domElement.addEventListener('pointerleave', () => { pointerActive = false; });
+renderer.domElement.addEventListener('pointercancel', () => { pointerActive = false; });
+
+/* ---------- Layout ---------- */
+function resize() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.position.set(0, 0, 6.4 / Math.min(1, camera.aspect * 1.15));
+  camera.lookAt(0, 0, 0);
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* ---------- Loop ---------- */
+const velocity = new THREE.Vector3();
+const smoothVel = new THREE.Vector3();
+const goal = new THREE.Vector3();
+const tmp = new THREE.Vector3();
+let pulse = 0;
+let reach = 0;
+let time = 0;
+let last = 0;
+let announced = false;
+
+function frame(now) {
+  const dt = last ? Math.min((now - last) / 1000, 1 / 20) : 1 / 60;
+  last = now;
+  time += dt;
+
+  if (pointerActive && now - lastPointerTime > 4000) pointerActive = false;
+  if (pointerActive) {
+    goal.copy(pointerWorld).multiplyScalar(0.42);
+  } else {
+    goal.set(Math.sin(time * 0.41) * 0.35, Math.sin(time * 0.57) * 0.18, 0);
+  }
+  goal.x = THREE.MathUtils.clamp(goal.x, -1.6, 1.6);
+  goal.y = THREE.MathUtils.clamp(goal.y, -1.0, 1.0);
+
+  tmp.copy(goal).sub(blob.position).multiplyScalar(22).addScaledVector(velocity, -5.2);
+  velocity.addScaledVector(tmp, dt);
+  blob.position.addScaledVector(velocity, dt);
+  smoothVel.lerp(velocity, 1 - Math.exp(-dt * 10));
+  if (smoothVel.length() > 3) smoothVel.setLength(3);
+
+  reach += ((pointerActive ? 1 : 0) - reach) * (1 - Math.exp(-dt * 4));
+  pulse *= Math.exp(-dt * 2.4);
+
+  uniforms.uTime.value = time;
+  uniforms.uPointer.value.copy(pointerWorld).sub(blob.position);
+  uniforms.uVel.value.copy(smoothVel);
+  uniforms.uReach.value = reach;
+  uniforms.uPulse.value = pulse;
+
+  lamellae.children.forEach((m, i) => {
+    m.rotation.y = 0.55 + i * 0.06 + Math.sin(time * 0.3 + i * 0.5) * 0.08;
+  });
+  ring.rotation.z = time * 0.12;
+
+  renderer.render(scene, camera);
+  if (!announced) {
+    announced = true;
+    notify('ready');
+  }
+}
+
+function setRunning(on) {
+  last = 0;
+  renderer.setAnimationLoop(on ? frame : null);
+}
+
+window.addEventListener('message', (event) => {
+  const type = event.data && event.data.type;
+  if (type === 'pause') setRunning(false);
+  else if (type === 'resume') setRunning(true);
+});
+
+renderer.domElement.addEventListener('webglcontextlost', (event) => {
+  event.preventDefault();
+  setRunning(false);
+});
+renderer.domElement.addEventListener('webglcontextrestored', () => setRunning(true));
+
+setRunning(true);
+</script>
+</body>
+</html>
