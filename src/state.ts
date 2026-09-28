@@ -9,6 +9,11 @@ export interface SceneState {
   velocity: number;
   /** Per-section progress: 0 when the section top meets the viewport bottom, 1 when its bottom meets the viewport top. */
   section: Record<SectionId, number>;
+  /**
+   * Opening optical chapter (hero → about edge), scrub-linked 0..1.
+   * Drives explode / orbit / reassemble of the travelling S7 lens.
+   */
+  story: number;
   /** Pointer in normalised device coordinates, -1..1, y up. */
   pointer: { x: number; y: number };
   /** Social channel that is hovered, focused, or expanded. */
@@ -26,6 +31,7 @@ export const state: SceneState = {
   scroll: 0,
   velocity: 0,
   section: { hero: 0, about: 0, work: 0, lab: 0, contact: 0 },
+  story: 0,
   pointer: { x: 0, y: 0 },
   activeSocial: null,
   burst: { social: null, x: 0, y: 0, t: -1e9 },

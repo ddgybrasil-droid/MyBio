@@ -4,6 +4,10 @@ import { state } from '../state';
 
 gsap.registerPlugin(ScrollTrigger);
 
+/**
+ * Dark specimen chamber: pinned scrub where each work blooms like a focus pull
+ * out of the optical narrative (iris / aperture), not a generic card wipe.
+ */
 export function initSpecimenChamber(): void {
   const chamber = document.getElementById('work');
   const cards = [...document.querySelectorAll<HTMLElement>('[data-specimen-card]')];
@@ -37,14 +41,18 @@ export function initSpecimenChamber(): void {
         chamber.classList.add('is-pinned');
         gsap.set(cards.slice(1), { autoAlpha: 0 });
 
+        const firstStage = cards[0]?.querySelector<HTMLElement>('.specimen__stage');
+        const firstCopy = cards[0]?.querySelector<HTMLElement>('.specimen__copy');
+        const firstIndex = cards[0]?.querySelector<HTMLElement>('.specimen__index');
+
         const timeline = gsap.timeline({
           defaults: { ease: 'power3.inOut' },
           scrollTrigger: {
             trigger: chamber,
             start: 'top top',
-            end: () => `+=${Math.round(window.innerHeight * 3.8)}`,
+            end: () => `+=${Math.round(window.innerHeight * 4.2)}`,
             pin: true,
-            scrub: 0.85,
+            scrub: 0.78,
             anticipatePin: 1,
             invalidateOnRefresh: true,
           },
@@ -54,7 +62,34 @@ export function initSpecimenChamber(): void {
           },
         });
 
-        timeline.to({}, { duration: 0.9 });
+        // Opening bloom: first specimen focuses in from the optical centre.
+        if (firstStage) {
+          timeline.fromTo(
+            firstStage,
+            {
+              scale: 1.18,
+              autoAlpha: 0.35,
+              filter: 'blur(10px)',
+              clipPath: 'circle(18% at 50% 48%)',
+            },
+            {
+              scale: 1,
+              autoAlpha: 1,
+              filter: 'blur(0px)',
+              clipPath: 'inset(0% 0% 0% 0%)',
+              duration: 0.85,
+            },
+            0,
+          );
+        }
+        if (firstCopy) {
+          timeline.fromTo(firstCopy, { autoAlpha: 0, y: 36 }, { autoAlpha: 1, y: 0, duration: 0.55 }, 0.28);
+        }
+        if (firstIndex) {
+          timeline.fromTo(firstIndex, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.35 }, 0.22);
+        }
+
+        timeline.to({}, { duration: 0.75 });
 
         for (let index = 1; index < cards.length; index += 1) {
           const previous = cards[index - 1];
@@ -71,39 +106,45 @@ export function initSpecimenChamber(): void {
             .to(
               previousStage,
               {
-                scale: 0.84,
-                clipPath: 'inset(12% 50% 12% 0%)',
-                rotateY: -7,
-                duration: 0.58,
+                scale: 0.88,
+                autoAlpha: 0,
+                filter: 'blur(8px)',
+                clipPath: 'circle(10% at 50% 50%)',
+                rotateY: -4,
+                duration: 0.62,
               },
               '<',
             )
-            .to(previousCopy, { autoAlpha: 0, y: -42, duration: 0.38 }, '<0.08')
-            .to(previousIndex, { autoAlpha: 0, y: -14, duration: 0.24 }, '<')
+            .to(previousCopy, { autoAlpha: 0, y: -28, duration: 0.32 }, '<0.06')
+            .to(previousIndex, { autoAlpha: 0, y: -10, duration: 0.22 }, '<')
             .fromTo(
               currentStage,
               {
-                scale: 1.14,
-                clipPath: 'inset(6% 0% 6% 54%)',
-                rotateY: 7,
+                scale: 1.12,
+                autoAlpha: 0.2,
+                filter: 'blur(12px)',
+                clipPath: 'circle(12% at 50% 48%)',
+                rotateY: 5,
               },
               {
                 scale: 1,
+                autoAlpha: 1,
+                filter: 'blur(0px)',
                 clipPath: 'inset(0% 0% 0% 0%)',
                 rotateY: 0,
-                duration: 0.7,
+                duration: 0.72,
               },
-              '<0.08',
+              '<0.1',
             )
             .fromTo(
               currentCopy,
-              { autoAlpha: 0, y: 48 },
-              { autoAlpha: 1, y: 0, duration: 0.52 },
-              '<0.16',
+              { autoAlpha: 0, y: 40 },
+              { autoAlpha: 1, y: 0, duration: 0.5 },
+              '<0.18',
             )
-            .fromTo(currentIndex, { autoAlpha: 0, y: 14 }, { autoAlpha: 1, y: 0, duration: 0.3 }, '<')
+            .fromTo(currentIndex, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.28 }, '<')
             .set(previous, { autoAlpha: 0, visibility: 'hidden' })
-            .to({}, { duration: 0.9 });
+            .to({}, { duration: 0.78 });
         }
 
         return () => {

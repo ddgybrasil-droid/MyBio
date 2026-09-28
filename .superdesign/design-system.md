@@ -97,7 +97,7 @@ A 56px DOM navigation rail: `ASCEND / S7`, current section, seven progression ti
 
 ### Hero — Calibration
 
-Approximately 140vh. Identity occupies the lower-left six columns. A 62vw S7 Split Lens floats off-centre right and refracts a short factual practice statement. Three social glyphs align on the far-right calibration rail. A huge cropped `ASCEND / S7` wordmark anchors the bottom edge.
+Approximately 178vh on desktop (scrub runway). Identity occupies the lower-left six columns. A 62vw S7 Split Lens floats off-centre right and refracts a short factual practice statement. Three social glyphs align on the far-right calibration rail. A huge cropped `ASCEND / S7` wordmark anchors the bottom edge.
 
 ### Bio — Operator Notes
 
@@ -113,19 +113,19 @@ Wide irregular work surfaces with live preview, premise, technology, browser req
 
 ### Contact — Signal Output
 
-Three physical glass pucks on an aluminium rail:
+An optical **signal bay**: three glass specimen plates on a calibrated instrument panel, with the travelling S7 lens shallow behind them. Each plate shows channel index, mode, handle, and a short note when closed — the aperture puck opens the action.
 
-1. Discord `@ascend_s7`
-2. Telegram `@abouthard`
-3. TikTok `@tg.abouthard`
+1. Discord `@ascend_s7` — copy
+2. Telegram `@abouthard` — direct
+3. TikTok `@tg.abouthard` — profile plate
 
 Plain-text links/handles repeat in the footer.
 
 ## Motion choreography
 
-- Hero: seven lamellae rise and assemble once; scroll rotates the resulting lens only 16 degrees.
-- Bio: lamellae separate in depth; one becomes the section object.
-- Work: one controlled camera track with stable reading windows; active specimens react to pointer by no more than 3 degrees.
+- Hero: seven lamellae rise and assemble once; scrubbed scroll then explodes, orbits, and reassembles the optic (All Star–style chapter, optical-glass themed) before handing off to About.
+- Bio: lamellae remain exploded in depth; one becomes the section object.
+- Work: specimens bloom from an optical iris focus inside the dark chamber; one controlled camera track with stable reading windows; active specimens react to pointer by no more than 3 degrees.
 - Experiments: the chamber opens like two optical shutters. Controls attach only when a demo is active.
 - Contact: three pucks roll no more than 30px onto a rail; the final state becomes still.
 - Native scroll is always the source of truth. Entry reveals happen once; lens and camera states reverse with scroll.
@@ -133,7 +133,7 @@ Plain-text links/handles repeat in the footer.
 
 ### Contact pucks
 
-Each channel is a 56px glass disc. The mark is an optical drawing, still recognizable: Discord as two apertures and a slit, Telegram as a folded prism, TikTok as a note with a chromatic ghost. First tap expands a panel from the disc; a second tap on the disc, the close control, Escape, or an outside click collapses it back. Discord copies `ascend_s7` when it opens. Telegram sweeps a specular glint across the capsule instead of moving the prism. TikTok grows a short account plate (handle, what the account is, open, copy) from the disc. Reduced motion snaps the panel open and shut.
+Each channel lives on a glass specimen plate with engraved index, always-visible handle, and a 56px optical aperture. Marks stay optical: Discord as two apertures and a slit, Telegram as a folded prism, TikTok as a note with a chromatic ghost. First tap expands an action panel from the aperture; a second tap on the disc, the close control, Escape, or an outside click collapses it. Discord copies `ascend_s7` when it opens. Telegram sweeps a specular glint across the capsule. TikTok grows a short account plate (handle, blurb, open, copy). Reduced motion snaps panels open and shut. The closed bay must already feel intentional — not empty until opened.
 
 ## Responsive and capability tiers
 

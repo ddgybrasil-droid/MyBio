@@ -37,12 +37,12 @@ function set(p: Pose, i: number, px: number, py: number, pz: number, rx: number,
   l[o + 8] = sz;
 }
 
-function group(p: Pose, rx: number, ry: number, rz: number, bench: number, shadow: number, ground: number): void {
+function group(p: Pose, rx: number, ry: number, rz: number, bench: number, shadow: number, ground: number, scale = 1): void {
   const g = p.group;
   g[G.rx] = rx;
   g[G.ry] = ry;
   g[G.rz] = rz;
-  g[G.scale] = 1;
+  g[G.scale] = scale;
   g[G.ox] = 0;
   g[G.oy] = 0;
   g[G.bench] = bench;
@@ -51,13 +51,55 @@ function group(p: Pose, rx: number, ry: number, rz: number, bench: number, shado
   g[G.rails] = 0;
 }
 
-/** Assembled lens; `turn` 0..1 rotates it by up to 16° as the hero scrolls away. */
-export function heroPose(p: Pose, turn: number): void {
+function clamp01(v: number): number {
+  return v < 0 ? 0 : v > 1 ? 1 : v;
+}
+
+/** Smoothstep 0→1 between edges a and b. */
+function smooth(a: number, b: number, t: number): number {
+  const x = clamp01((t - a) / Math.max(1e-6, b - a));
+  return x * x * (3 - 2 * x);
+}
+
+/**
+ * Opening optical chapter driven by scrubbed `story` 0..1 (burger-style explode / orbit / reassemble).
+ *
+ * - 0.00–0.18 assembled, quiet turn begins
+ * - 0.18–0.48 lamellae explode like specimen layers
+ * - 0.48–0.78 camera orbit + scale push while still open
+ * - 0.78–1.00 reassemble toward a held calibration stance for the about handoff
+ */
+export function heroPose(p: Pose, story: number): void {
+  const t = clamp01(story);
+  const explode = smooth(0.16, 0.4, t) * (1 - smooth(0.72, 0.94, t));
+  const orbit = smooth(0.34, 0.62, t);
+  const settle = smooth(0.72, 1, t);
+  const turn = smooth(0.04, 0.88, t);
+
   for (const s of LAMELLA_SPECS) {
     const i = s.index;
-    set(p, i, s.x, s.y, STAGGER_Z[i], STAGGER_PITCH[i] * DEG, STAGGER_YAW[i] * DEG, STAGGER_ROLL[i] * DEG);
+    const k = i - 3;
+    const side = Math.sign(k) || (i % 2 ? 1 : -1);
+    const fan = explode * (0.55 + Math.abs(k) * 0.22);
+    const px = s.x * (1 + 0.55 * explode) + side * fan * 0.42;
+    const py = s.y * (1 + 0.35 * explode) + Math.sin(i * 1.7) * 0.05 * explode;
+    const pz = STAGGER_Z[i] * (1 - 0.35 * explode) - k * 0.38 * explode - orbit * 0.06 * Math.abs(k);
+    const rx = (STAGGER_PITCH[i] + k * 2.4 * explode - 4 * orbit) * DEG;
+    const ry = (STAGGER_YAW[i] + (28 + k * 4) * explode + 10 * orbit * side) * DEG;
+    const rz = (STAGGER_ROLL[i] - k * 1.8 * explode) * DEG;
+    const sx = 1 + 0.04 * explode;
+    const sy = 1 + 0.08 * explode;
+    const sz = 1 + 0.18 * explode;
+    set(p, i, px, py, pz, rx, ry, rz, sx, sy, sz);
   }
-  group(p, 3 * DEG, (-9 + 16 * turn) * DEG, -2 * DEG, 1, 1, 1);
+
+  const yaw = (-10 + 28 * turn - 8 * settle) * DEG;
+  const pitch = (3 + 7 * explode - 4 * settle + 5 * orbit) * DEG;
+  const roll = (-2 + 3 * explode * Math.sin(t * Math.PI)) * DEG;
+  const scale = 1 + 0.1 * explode + 0.06 * orbit - 0.04 * settle;
+  group(p, pitch, yaw, roll, 1, 1, 1, scale);
+  p.group[G.ox] = -0.06 * orbit + 0.04 * settle;
+  p.group[G.oy] = 0.04 * explode - 0.03 * settle;
 }
 
 /** Exploded along depth and sideways, each slab turned to show its edge. */
