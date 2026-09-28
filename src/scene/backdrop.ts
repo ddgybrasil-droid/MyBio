@@ -77,10 +77,8 @@ function drawBench(target: HTMLCanvasElement, bg: string, ink: string): void {
   const u = W / BENCH_W;
   const cx = W / 2;
   const cy = H / 2;
-  const hair = Math.max(1, u * 0.0042);
   const X = (v: number) => cx + v * u;
   const Y = (v: number) => cy - v * u;
-  const snap = (v: number) => Math.round(v) + 0.5;
 
   const layer = document.createElement('canvas');
   layer.width = W;
@@ -88,126 +86,42 @@ function drawBench(target: HTMLCanvasElement, bg: string, ink: string): void {
   const m = layer.getContext('2d');
   const ctx = target.getContext('2d');
   if (!m || !ctx) return;
-  m.fillStyle = ink;
+
+  // Supporting luminous field only — soft wash the glass can bend.
+  // No dense rulings / rays / registration corners that fight the optic.
+  const wash = m.createRadialGradient(cx - 0.12 * u, cy - 0.18 * u, 0.05 * u, cx, cy, 1.7 * u);
+  wash.addColorStop(0, 'rgba(255,255,255,0.78)');
+  wash.addColorStop(0.35, 'rgba(255,252,246,0.28)');
+  wash.addColorStop(0.7, 'rgba(210,220,218,0.1)');
+  wash.addColorStop(1, 'rgba(21,24,22,0)');
+  m.fillStyle = wash;
+  m.fillRect(0, 0, W, H);
+
+  // Cool rim veil so refraction picks a quiet temperature shift (reads as depth).
+  const cool = m.createLinearGradient(X(-1.4), Y(1.2), X(1.4), Y(-1.2));
+  cool.addColorStop(0, 'rgba(180, 205, 210, 0.1)');
+  cool.addColorStop(0.5, 'rgba(180, 205, 210, 0)');
+  cool.addColorStop(1, 'rgba(160, 175, 170, 0.08)');
+  m.fillStyle = cool;
+  m.fillRect(0, 0, W, H);
+
+  // Single faint aperture ring — one optical cue, not a target board.
   m.strokeStyle = ink;
-  m.lineCap = 'butt';
+  m.lineWidth = Math.max(1, u * 0.0032);
+  m.globalAlpha = 0.1;
+  m.beginPath();
+  m.arc(cx, cy, 0.92 * u, 0, Math.PI * 2);
+  m.stroke();
 
-  m.globalAlpha = 0.15;
-  m.font = `680 ${Math.round(1.9 * u)}px "Onest Variable", Onest, system-ui, sans-serif`;
+  // Whisper S7 watermark for thickness cue through clear glass.
+  m.globalAlpha = 0.045;
+  m.fillStyle = ink;
+  m.font = `600 ${Math.round(1.4 * u)}px "Onest Variable", Onest, system-ui, sans-serif`;
   m.textAlign = 'center';
-  m.textBaseline = 'alphabetic';
-  const glyph = m.measureText('S7');
-  const ascent = glyph.actualBoundingBoxAscent || 1.4 * u;
-  m.fillText('S7', X(0.02), cy + ascent / 2);
+  m.textBaseline = 'middle';
+  m.fillText('S7', cx, cy);
 
-  // Ruled target with ruler-like weights: a periodic ruling alone would alias under a
-  // one-pitch shift, the heavier fifth lines keep each slab's offset unambiguous.
-  const ruling = document.createElement('canvas');
-  ruling.width = W;
-  ruling.height = H;
-  const r = ruling.getContext('2d');
-  if (r) {
-    r.fillStyle = ink;
-    const pitch = 0.05 * u;
-    const rows = 20;
-    for (let k = -rows; k <= rows; k++) {
-      const major = k % 5 === 0;
-      const lineH = major ? Math.max(1.5, u * 0.0085) : Math.max(1, u * 0.004);
-      r.globalAlpha = major ? 0.42 : 0.2;
-      r.fillRect(X(-1.18), Math.round(cy + k * pitch - lineH / 2), 2.36 * u, lineH);
-    }
-    maskRect(r, X(-1.02), X(1.02), Y(0.92), Y(-0.92), 0.16 * u);
-    m.globalAlpha = 1;
-    m.drawImage(ruling, 0, 0);
-  }
-
-  m.lineWidth = hair;
-  m.globalAlpha = 0.36;
-  m.beginPath();
-  m.arc(cx, cy, 1.06 * u, 0, Math.PI * 2);
-  m.stroke();
-  m.beginPath();
-  for (let k = 0; k < 72; k++) {
-    const a = (k / 72) * Math.PI * 2;
-    const len = k % 6 === 0 ? 0.07 * u : 0.03 * u;
-    m.moveTo(cx + Math.cos(a) * 1.06 * u, cy + Math.sin(a) * 1.06 * u);
-    m.lineTo(cx + Math.cos(a) * (1.06 * u + len), cy + Math.sin(a) * (1.06 * u + len));
-  }
-  m.stroke();
-
-  // Paraxial rays converging on the focal point: diagonals break visibly at every slab edge.
-  m.globalAlpha = 0.5;
-  m.lineWidth = Math.max(1, u * 0.0055);
-  const focus = 1.3;
-  m.beginPath();
-  for (const h of [-0.78, -0.46, -0.16, 0.16, 0.46, 0.78]) {
-    m.moveTo(X(-1.14), Y(h));
-    m.lineTo(X(-0.9), Y(h));
-    m.lineTo(X(focus), Y(0));
-  }
-  m.stroke();
-
-  m.globalAlpha = 0.62;
-  m.lineWidth = hair;
-  m.beginPath();
-  m.moveTo(X(-1.36), snap(cy));
-  m.lineTo(X(1.36), snap(cy));
-  m.moveTo(snap(cx), Y(1.18));
-  m.lineTo(snap(cx), Y(-1.18));
-  for (let k = -26; k <= 26; k++) {
-    const x = snap(X(k * 0.05));
-    const len = k % 10 === 0 ? 0.1 * u : k % 5 === 0 ? 0.06 * u : 0.028 * u;
-    m.moveTo(x, cy);
-    m.lineTo(x, cy - len);
-  }
-  for (let k = -22; k <= 22; k++) {
-    if (k === 0) continue;
-    const y = snap(Y(k * 0.05));
-    const len = k % 10 === 0 ? 0.08 * u : k % 5 === 0 ? 0.05 * u : 0.022 * u;
-    m.moveTo(cx, y);
-    m.lineTo(cx + len, y);
-  }
-  m.stroke();
-
-  m.beginPath();
-  m.arc(X(focus), cy, 0.022 * u, 0, Math.PI * 2);
-  m.fill();
-
-  // Registration corners.
-  m.globalAlpha = 0.55;
-  m.beginPath();
-  for (const sx of [-1, 1]) {
-    for (const sy of [-1, 1]) {
-      const x = snap(X(sx * 1.36));
-      const y = snap(Y(sy * 1.2));
-      m.moveTo(x - sx * 0.16 * u, y);
-      m.lineTo(x, y);
-      m.lineTo(x, y + sy * 0.16 * u);
-    }
-  }
-  m.stroke();
-
-  const mono = (size: number) => `500 ${Math.round(size * u)}px "IBM Plex Mono", ui-monospace, monospace`;
-  m.globalAlpha = 0.62;
-  m.font = mono(0.042);
-  m.textBaseline = 'top';
-  m.textAlign = 'center';
-  for (const k of [-1, 1]) m.fillText(k < 0 ? '\u22121.0' : '1.0', X(k), cy + 0.03 * u);
-  m.fillText('F', X(focus), cy + 0.045 * u);
-  m.font = mono(0.046);
-  m.textAlign = 'left';
-  m.textBaseline = 'alphabetic';
-  m.fillText('S7 / OPTICAL BENCH', X(-1.3), Y(1.13));
-  m.textBaseline = 'top';
-  m.fillText('n 1.480 \u00b7 f 42.0 mm', X(-1.3), Y(-1.13));
-  m.textAlign = 'right';
-  m.textBaseline = 'alphabetic';
-  m.fillText('\u03bb 587.6 nm', X(1.3), Y(1.13));
-  m.textBaseline = 'top';
-  m.fillText('07 LAMELLAE', X(1.3), Y(-1.13));
-
-  // The card border must be the exact background colour.
-  maskRect(m, X(-1.44), X(1.44), Y(1.3), Y(-1.3), 0.1 * u);
+  maskRect(m, X(-1.44), X(1.44), Y(1.3), Y(-1.3), 0.18 * u);
 
   ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = 1;

@@ -13,20 +13,22 @@ import {
 } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 
-/** Dark vertical flags (as in product photography) give clear glass its crisp edge lines. */
+/** Dark vertical flags (product-photo style) so clear glass picks crisp edge lines. */
 const FLAGS: [x: number, y: number, z: number, sx: number, sy: number, sz: number][] = [
-  [-8.5, 11, 13.9, 3.2, 22, 0.1],
-  [7.5, 11, 13.9, 2.2, 22, 0.1],
-  [-15.6, 11, -1, 0.1, 22, 4.5],
-  [14.6, 11, 5.5, 0.1, 22, 3],
-  [2, 11, -13.8, 5, 22, 0.1],
+  [-9.2, 11, 13.9, 3.6, 22, 0.1],
+  [8.4, 11, 13.9, 2.8, 22, 0.1],
+  [-15.8, 11, -1, 0.1, 22, 5],
+  [15.2, 11, 4.5, 0.1, 22, 3.6],
+  [1.2, 11, -13.8, 6, 22, 0.1],
+  [-4, 2, 13.5, 2.4, 4, 0.1],
 ];
 
-/** Thin strip lights [x, y, z, sx, sy, sz, intensity] that replace the broad frontal softbox. */
+/** Thin strip lights that replace the broad frontal softbox — bright edges, quiet faces. */
 const STRIPS: [number, number, number, number, number, number, number][] = [
-  [0, 17.5, 13.6, 13, 0.34, 0.1, 60],
-  [-3.4, 9, 14.2, 0.12, 9, 0.1, 22],
-  [4.2, 10, 14.2, 0.08, 8, 0.1, 16],
+  [0, 17.8, 13.5, 11, 0.28, 0.1, 72],
+  [-4.2, 8.5, 14.1, 0.1, 10, 0.1, 28],
+  [5.1, 9.5, 14.1, 0.08, 9, 0.1, 20],
+  [0, 3.2, 14.0, 8, 0.18, 0.1, 14],
 ];
 
 /**
@@ -46,7 +48,7 @@ export function createRoomEnvironment(renderer: WebGLRenderer, bench = true): Te
       if (!mesh.isMesh) return;
       if (mesh.position.z > 14) mesh.visible = false;
       const material = mesh.material as MeshStandardMaterial;
-      if (material.side === BackSide) material.color.setScalar(0.62);
+      if (material.side === BackSide) material.color.setScalar(0.48);
     });
     const material = new MeshBasicMaterial({ color: 0x111412 });
     for (const [x, y, z, sx, sy, sz] of FLAGS) {
@@ -142,16 +144,17 @@ export function createGlassMaterial(options: GlassOptions = {}): MeshPhysicalMat
     name: 'S7 Glass',
     color: 0xffffff,
     metalness: 0,
-    roughness: options.roughness ?? 0.01,
+    roughness: options.roughness ?? 0.004,
     transmission: 1,
     thickness: options.thickness ?? 0.5,
-    ior: options.ior ?? 1.48,
+    ior: options.ior ?? 1.52,
     dispersion: options.dispersion ?? 0,
-    clearcoat: options.clearcoat ?? 0.35,
-    clearcoatRoughness: 0.05,
+    clearcoat: options.clearcoat ?? 0.85,
+    clearcoatRoughness: 0.03,
     specularIntensity: 1,
-    attenuationColor: new Color(options.attenuation ?? '#eef3ef'),
-    attenuationDistance: options.attenuationDistance ?? 2.6,
-    envMapIntensity: options.envMapIntensity ?? 1,
+    specularColor: new Color(0xffffff),
+    attenuationColor: new Color(options.attenuation ?? '#f6f8f5'),
+    attenuationDistance: options.attenuationDistance ?? 3.4,
+    envMapIntensity: options.envMapIntensity ?? 1.2,
   });
 }

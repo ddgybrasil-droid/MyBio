@@ -39,7 +39,7 @@ Lens choreography is layout-driven. Each section contains exactly one anchor ele
 <div data-lens-anchor="hero"></div>     <!-- assembled lens, right side of hero -->
 <div data-lens-anchor="about"></div>    <!-- exploded lamellae -->
 <div data-lens-anchor="lab"></div>      <!-- lamellae split into two shutters framing the bench -->
-<div data-lens-anchor="contact"></div>  <!-- shallow reassembled lens behind the social pucks -->
+<div data-lens-anchor="contact"></div>  <!-- shallow reassembled lens behind the optical channels -->
 ```
 
 The anchor's bounding rect (read once per frame, cheap) tells the scene where the lens should sit and how large it is. The scene blends between anchor states using `state.section[...]`. When `state.dark` is 1 the lens is fully occluded and the scene skips rendering.

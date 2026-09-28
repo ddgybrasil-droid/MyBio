@@ -18,8 +18,8 @@ export interface LamellaSpec {
 
 const PITCH = 0.286;
 const GAP = 0.036;
-const BULGE = 0.1;
-const EDGE_RADIUS = 0.024;
+const BULGE = 0.145;
+const EDGE_RADIUS = 0.03;
 const HEIGHT_TWEAK = [1.03, 0.96, 1.02, 1, 0.95, 1.04, 0.98];
 const Y_OFFSET = [0.035, -0.045, 0.02, 0, -0.03, 0.05, -0.015];
 const DEPTH_TWEAK = [1.1, 0.9, 1, 1.12, 0.94, 1.06, 0.88];

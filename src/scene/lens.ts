@@ -35,11 +35,11 @@ const WPP = 0.01;
 const FOV = 24;
 const BENCH_DEPTH = 2.6;
 const RIPPLE_MS = 700;
-const BASE_DISPERSION = 0.35;
+const BASE_DISPERSION = 0.22;
 /** Transmission thickness in lens radii; the refracted offset scales with it. */
-const THICKNESS = 5;
+const THICKNESS = 7.4;
 /** Path lengths (in THICKNESS units) over which light takes on one full attenuation tint. */
-const TINT_DEPTH = 0.18;
+const TINT_DEPTH = 0.28;
 
 /** Lens radius in CSS px for an anchor rect, per section composition. */
 const FIT: Record<AnchorId, (r: AnchorRect) => number> = {
@@ -88,25 +88,29 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
   const scene = new Scene();
   let env: Texture = createRoomEnvironment(renderer);
   scene.environment = env;
-  scene.environmentIntensity = 0.9;
+  scene.environmentIntensity = 0.72;
 
   const camera = new PerspectiveCamera(FOV, 1, 0.5, 400);
 
-  const key = new DirectionalLight(0xffffff, 1.4);
-  key.position.set(-3, 5, 7);
-  const rim = new DirectionalLight(0xf4f6f2, 1.1);
-  rim.position.set(5, 2, -6);
-  scene.add(key, rim);
+  // Soft key + cool fill + crisp rim: edges catch light; faces stay see-through.
+  const key = new DirectionalLight(0xfff6ee, 0.55);
+  key.position.set(-3.2, 6.2, 5.5);
+  const fill = new DirectionalLight(0xdde6ea, 0.22);
+  fill.position.set(1.8, 0.6, 6.5);
+  const rim = new DirectionalLight(0xf5faf7, 2.1);
+  rim.position.set(6.2, 2.4, -4.8);
+  scene.add(key, fill, rim);
 
   const glass = createGlassMaterial({
     thickness: THICKNESS,
-    ior: 1.52,
+    ior: 1.5,
+    roughness: lite ? 0.04 : 0.0,
     dispersion: lite ? 0 : BASE_DISPERSION,
-    attenuation: '#e4ece8',
-    envMapIntensity: 0.82,
-    clearcoat: 0.42,
+    attenuation: '#f3f7f4',
+    envMapIntensity: lite ? 0.55 : 0.68,
+    clearcoat: 0.55,
   });
-  useHighlightToneMapping(glass, 1.1, { tint: new Color(0.045, 0.05, 0.046), strength: 0.62, power: 2.35 });
+  useHighlightToneMapping(glass, 0.95, { tint: new Color(0.04, 0.048, 0.045), strength: 0.42, power: 2.9 });
   const geometries: BufferGeometry[] = createLamellaGeometries(lite ? 'low' : 'high');
   const lens = new Group();
   const lamellae = geometries.map((geometry) => {
@@ -165,7 +169,7 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     const dpr = Math.min(window.devicePixelRatio || 1, lite ? 1.25 : 1.75);
     renderer.setPixelRatio(dpr);
     // Keep the refracted image at roughly one sample per CSS px (hairlines must stay crisp through glass).
-    renderer.transmissionResolutionScale = Math.min(lite ? 0.6 : 1, (lite ? 0.8 : 1.3) / dpr);
+    renderer.transmissionResolutionScale = Math.min(lite ? 0.75 : 1.25, (lite ? 1 : 1.6) / dpr);
     renderer.setSize(w, h, false);
     if (coarse) canvas.style.height = `${h}px`;
     camera.aspect = w / h;
@@ -189,6 +193,7 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
   const startNow = lastNow;
   let hasPose = false;
   let wasDark = false;
+  let darkSmooth = 0;
   let wasOffscreen = false;
   let forceRender = true;
   let lost = false;
@@ -319,22 +324,24 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     let rippleEnv = 0;
     if (!reduced) {
       const t = (now - startNow) / 1000;
+      const storyW = clamp(state.story, 0, 1);
       for (let i = 0; i < LAMELLA_COUNT; i++) {
         const o = i * STRIDE;
-        const intro = easeOutCubic((t - 0.1 - i * 0.07) / 0.7);
+        const intro = easeOutCubic((t - 0.12 - i * 0.055) / 0.85);
         if (intro < 1) {
           const k = 1 - intro;
-          lam[o + 1] -= k * 2.8;
-          lam[o + 2] += k * 0.4;
-          lam[o + 5] += k * (i - 3) * 5 * DEG;
+          lam[o + 1] -= k * 1.6;
+          lam[o + 2] += k * 0.22;
+          lam[o + 5] += k * (i - 3) * 2.4 * DEG;
         }
-        lam[o + 1] += Math.sin(t * 0.6 + i * 1.3) * 0.006;
-        lam[o + 2] += Math.sin(t * 0.9 + i * 0.8) * 0.012;
+        const idle = 1 - storyW * 0.7;
+        lam[o + 1] += Math.sin(t * 0.45 + i * 1.1) * 0.0022 * idle;
+        lam[o + 2] += Math.sin(t * 0.55 + i * 0.7) * 0.004 * idle;
       }
-      g[G.rx] += Math.sin(t * 0.7) * 0.5 * DEG;
+      g[G.rx] += Math.sin(t * 0.42) * 0.22 * DEG * (1 - storyW * 0.55);
 
-      tiltX = damp(tiltX, -state.pointer.y * 4 * DEG, 4, dt);
-      tiltY = damp(tiltY, state.pointer.x * 4 * DEG, 4, dt);
+      tiltX = damp(tiltX, -state.pointer.y * 2.4 * DEG, 3.2, dt);
+      tiltY = damp(tiltY, state.pointer.x * 2.4 * DEG, 3.2, dt);
       g[G.rx] += tiltX;
       g[G.ry] += tiltY;
 
@@ -444,7 +451,21 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     // Keep the tint independent of the on-screen size (three scales the path by the model scale).
     glass.attenuationDistance = (THICKNESS * s) / TINT_DEPTH;
 
-    if (!lite) glass.dispersion = BASE_DISPERSION + 3 * rippleEnv;
+    if (!lite) glass.dispersion = BASE_DISPERSION + 2.2 * rippleEnv;
+    const fade = 1 - darkSmooth;
+    // Do not lower opacity on light sections — it milks out transmission.
+    // Only go transparent while dissolving into the dark chamber.
+    if (darkSmooth > 0.04) {
+      glass.transparent = true;
+      glass.opacity = Math.max(0.2, fade);
+      glass.depthWrite = darkSmooth < 0.45;
+    } else {
+      glass.transparent = false;
+      glass.opacity = 1;
+      glass.depthWrite = true;
+    }
+    bench.strength = clamp(g[G.bench], 0, 1) * (0.55 + 0.35 * fade);
+    scene.environmentIntensity = 0.72 * (0.8 + 0.2 * fade);
   }
 
   function changedSinceRender(): boolean {
@@ -475,8 +496,11 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     const dt = Math.min(0.05, Math.max(0, (now - lastNow) / 1000));
     lastNow = now;
     if (lost) return;
-    if (state.dark >= 0.999) {
+    darkSmooth = state.reducedMotion ? state.dark : damp(darkSmooth, state.dark, 5.5, dt);
+    if (darkSmooth >= 0.995) {
       wasDark = true;
+      if (forceRender) renderer.clear();
+      forceRender = false;
       return;
     }
     if (!computeFrames()) {
@@ -491,8 +515,9 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
       current.group.set(target.group);
       hasPose = true;
     } else {
-      dampArray(current.lam, target.lam, 7, dt);
-      dampArray(current.group, target.group, 7, dt);
+      const rate = 6.2 + 4.5 * clamp(state.story, 0, 1);
+      dampArray(current.lam, target.lam, rate, dt);
+      dampArray(current.group, target.group, rate, dt);
     }
     if (wasDark) forceRender = true;
     wasDark = false;
