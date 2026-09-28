@@ -1225,7 +1225,7 @@ html.js:not(.reduced-motion) .scroll-cue span {
 }
 
 .social-reveal > .social-puck {
-  z-index: 5;
+  z-index: 8;
 }
 
 .social-capsule,
@@ -1233,8 +1233,8 @@ html.js:not(.reduced-motion) .scroll-cue span {
   pointer-events: none;
 }
 
-.social-reveal.is-open .social-capsule,
-.social-reveal.is-open .tiktok-card {
+.social-reveal.is-open .social-capsule :is(a, button, p),
+.social-reveal.is-open .tiktok-card :is(a, button, p, header) {
   pointer-events: auto;
 }
 
@@ -1356,7 +1356,7 @@ html.js:not(.reduced-motion) .scroll-cue span {
   bottom: 12px;
   left: 12px;
   width: auto;
-  padding: 16px 16px 14px;
+  padding: 16px 16px 78px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--ink) 12%, white);
   border-radius: 22px;
