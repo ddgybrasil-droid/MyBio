@@ -282,6 +282,7 @@ export function createShaderBench(): Piece {
   const io = new IntersectionObserver(
     (entries) => {
       visible = entries.some((e) => e.isIntersecting);
+      if (visible && !runner.supported && runner.retryContext()) enableRunner();
       updateActive();
       if (visible && !everVisible) {
         everVisible = true;
@@ -299,6 +300,20 @@ export function createShaderBench(): Piece {
   /* ---------- Initial state ---------- */
   (radios.get(currentId) as HTMLInputElement).checked = true;
   setCaption();
+  function enableRunner(): void {
+    delete stage.dataset.state;
+    coverRun.hidden = false;
+    playBtn.disabled = false;
+    restartBtn.disabled = false;
+    setLog('');
+    coverText.textContent = state.reducedMotion
+      ? 'Анимация на паузе: в системе включено уменьшение движения. Показан один кадр.'
+      : 'Превью на паузе. Показан один кадр.';
+    runner.resetTime(STILL_TIME);
+    compileNow();
+    syncControls();
+  }
+
   if (!runner.supported) {
     stage.dataset.state = 'unsupported';
     cover.hidden = false;
@@ -308,12 +323,7 @@ export function createShaderBench(): Piece {
     restartBtn.disabled = true;
     setLog('Превью отключено: нет WebGL2.');
   } else {
-    coverText.textContent = state.reducedMotion
-      ? 'Анимация на паузе: в системе включено уменьшение движения. Показан один кадр.'
-      : 'Превью на паузе. Показан один кадр.';
-    runner.resetTime(STILL_TIME);
-    compileNow();
-    syncControls();
+    enableRunner();
   }
 
   const shared = readShareHash();

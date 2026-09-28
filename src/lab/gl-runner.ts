@@ -162,6 +162,14 @@ export class GlRunner {
     return this.gl !== null;
   }
 
+  /** Context creation can fail transiently while other canvases hold GPU resources. */
+  retryContext(): boolean {
+    if (this.gl) return true;
+    this.initContext();
+    if (this.gl) this.applySize();
+    return this.gl !== null;
+  }
+
   get isPlaying(): boolean {
     return this.playing;
   }
