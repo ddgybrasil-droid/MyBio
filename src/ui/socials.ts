@@ -9,7 +9,7 @@ interface SocialView {
   wrapper: HTMLElement;
   trigger: HTMLButtonElement;
   details: HTMLElement;
-  timeline: gsap.core.Timeline;
+  timeline: gsap.core.Timeline | null;
   phase: Phase;
   closedLabel: string;
   openLabel: string;
@@ -27,6 +27,12 @@ function pointFor(element: Element, clientX?: number, clientY?: number): { x: nu
   return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
 }
 
+function closedScale(panel: HTMLElement, axis: 'x' | 'y'): number {
+  const size = axis === 'x' ? panel.offsetWidth : panel.offsetHeight;
+  if (!size) return axis === 'x' ? 0.16 : 1;
+  return Math.min(1, 56 / size);
+}
+
 function buildTimeline(view: SocialView): gsap.core.Timeline {
   const panel = view.details;
   const content = panel.querySelectorAll<HTMLElement>('p, a, button');
@@ -35,10 +41,14 @@ function buildTimeline(view: SocialView): gsap.core.Timeline {
   const timeline = gsap.timeline({ paused: true });
 
   timeline
-    .set(panel, { transformOrigin: card ? '28px 28px' : '28px 50%' }, 0)
+    .set(panel, { transformOrigin: card ? '0 0' : '0 50%' }, 0)
     .fromTo(
       panel,
-      { autoAlpha: 0, scaleX: card ? 0.18 : 0.16, scaleY: card ? 0.24 : 1 },
+      {
+        autoAlpha: 0,
+        scaleX: () => closedScale(panel, 'x'),
+        scaleY: () => (card ? closedScale(panel, 'y') : 1),
+      },
       { autoAlpha: 1, scaleX: 1, scaleY: 1, duration: 0.36, ease: 'power3.inOut' },
       0,
     )
@@ -111,19 +121,19 @@ export function initSocials(): void {
 
   const finishClose = (view: SocialView): void => {
     if (view.phase !== 'closing') return;
-    view.timeline.kill();
+    view.timeline?.kill();
+    view.timeline = null;
     view.phase = 'closed';
     setClosedSemantics(view);
     clearMotion(view);
-    view.timeline = buildTimeline(view);
   };
 
   const closeView = (view: SocialView, returnFocus: boolean): void => {
     if (view.phase !== 'open') return;
     view.phase = 'closing';
     const timeline = view.timeline;
-    const canReverse = !state.reducedMotion && timeline.totalProgress() > 0.02;
-    if (canReverse) {
+    const canReverse = !state.reducedMotion && timeline !== null && timeline.totalProgress() > 0.02;
+    if (canReverse && timeline) {
       timeline.eventCallback('onReverseComplete', () => {
         timeline.eventCallback('onReverseComplete', null);
         finishClose(view);
@@ -142,13 +152,14 @@ export function initSocials(): void {
   };
 
   const showInstant = (view: SocialView): void => {
-    view.timeline.pause(0);
+    view.timeline?.pause(0);
     gsap.set(view.details, { autoAlpha: 1, scaleX: 1, scaleY: 1 });
     gsap.set(view.details.querySelectorAll('p, a, button'), { autoAlpha: 1, x: 0 });
   };
 
   const openView = (view: SocialView, clientX?: number, clientY?: number): void => {
     if (view.phase === 'open') return;
+    const interrupting = view.phase === 'closing';
     closeOthers(view.id);
     const point = pointFor(view.trigger, clientX, clientY);
     triggerBurst(view.id, point.x, point.y);
@@ -160,15 +171,20 @@ export function initSocials(): void {
     view.trigger.setAttribute('aria-label', view.openLabel);
     view.details.removeAttribute('inert');
 
-    view.timeline.eventCallback('onReverseComplete', null);
     if (state.reducedMotion) {
       showInstant(view);
       return;
     }
 
-    view.timeline.timeScale(1);
-    if (view.timeline.reversed() && view.timeline.totalProgress() > 0) view.timeline.play();
-    else view.timeline.play(0);
+    if (!interrupting || !view.timeline) {
+      view.timeline?.kill();
+      view.timeline = buildTimeline(view);
+    }
+    const timeline = view.timeline;
+    timeline.eventCallback('onReverseComplete', null);
+    timeline.timeScale(1);
+    if (interrupting && timeline.reversed() && timeline.totalProgress() > 0) timeline.play();
+    else timeline.play(0);
   };
 
   document.querySelectorAll<HTMLElement>('[data-social-reveal]').forEach((wrapper) => {
@@ -182,12 +198,11 @@ export function initSocials(): void {
       wrapper,
       trigger,
       details,
-      timeline: null as unknown as gsap.core.Timeline,
+      timeline: null,
       phase: 'closed',
       closedLabel: trigger.getAttribute('aria-label') ?? OPEN_LABEL[id],
       openLabel: OPEN_LABEL[id],
     };
-    view.timeline = buildTimeline(view);
     views.set(id, view);
 
     trigger.addEventListener('click', (event) => {

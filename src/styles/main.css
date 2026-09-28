@@ -1086,7 +1086,7 @@ main,
   visibility: hidden;
   opacity: 0;
   transform: scaleX(0.16);
-  transform-origin: 28px 50%;
+  transform-origin: left center;
 }
 
 .social-capsule__socket {
@@ -1189,8 +1189,8 @@ main,
   backdrop-filter: blur(var(--glass-regular-blur));
   visibility: hidden;
   opacity: 0;
-  transform: scale(0.2);
-  transform-origin: 28px 28px;
+  transform: scale(0.17);
+  transform-origin: top left;
 }
 
 .social-reveal--tiktok.is-open {
