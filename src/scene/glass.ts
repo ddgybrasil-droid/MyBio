@@ -1,10 +1,13 @@
 import {
+  BackSide,
   BoxGeometry,
   Color,
   Mesh,
   MeshBasicMaterial,
   MeshPhysicalMaterial,
+  type MeshStandardMaterial,
   PMREMGenerator,
+  Vector2,
   type Texture,
   type WebGLRenderer,
 } from 'three';
@@ -19,18 +22,44 @@ const FLAGS: [x: number, y: number, z: number, sx: number, sy: number, sz: numbe
   [2, 11, -13.8, 5, 22, 0.1],
 ];
 
-/** Studio reflections from PMREM(RoomEnvironment) — no HDR download. Caller owns the texture. */
-export function createRoomEnvironment(renderer: WebGLRenderer, flags = true): Texture {
+/** Thin strip lights [x, y, z, sx, sy, sz, intensity] that replace the broad frontal softbox. */
+const STRIPS: [number, number, number, number, number, number, number][] = [
+  [0, 17.5, 13.6, 13, 0.34, 0.1, 60],
+  [-3.4, 9, 14.2, 0.12, 9, 0.1, 22],
+  [4.2, 10, 14.2, 0.08, 8, 0.1, 16],
+];
+
+/**
+ * Studio reflections from PMREM(RoomEnvironment), no HDR download. Caller owns the texture.
+ *
+ * `bench` tunes the room for clear glass on a light page: the frontal softbox (which
+ * paints every camera-facing face white) becomes thin strips, the walls are dimmed and
+ * dark flags are added, so faces stay clear while bevels pick up crisp lines.
+ */
+export function createRoomEnvironment(renderer: WebGLRenderer, bench = true): Texture {
   const pmrem = new PMREMGenerator(renderer);
   const room = new RoomEnvironment();
-  if (flags) {
+  if (bench) {
     const geometry = new BoxGeometry();
+    room.traverse((node) => {
+      const mesh = node as Mesh;
+      if (!mesh.isMesh) return;
+      if (mesh.position.z > 14) mesh.visible = false;
+      const material = mesh.material as MeshStandardMaterial;
+      if (material.side === BackSide) material.color.setScalar(0.42);
+    });
     const material = new MeshBasicMaterial({ color: 0x111412 });
     for (const [x, y, z, sx, sy, sz] of FLAGS) {
       const flag = new Mesh(geometry, material);
       flag.position.set(x, y, z);
       flag.scale.set(sx, sy, sz);
       room.add(flag);
+    }
+    for (const [x, y, z, sx, sy, sz, intensity] of STRIPS) {
+      const strip = new Mesh(geometry, new MeshBasicMaterial({ color: new Color(intensity, intensity, intensity) }));
+      strip.position.set(x, y, z);
+      strip.scale.set(sx, sy, sz);
+      room.add(strip);
     }
   }
   const texture = pmrem.fromScene(room, 0.035).texture;
@@ -74,22 +103,38 @@ const HIGHLIGHT_TONEMAP = /* glsl */ `
  * only to the specular/clearcoat terms; transmitted light stays linear, so the page
  * seen through the glass keeps its exact colour and contrast.
  */
-export function useHighlightToneMapping(material: MeshPhysicalMaterial, exposure = 1): void {
+export interface EdgeOptions {
+  /** Linear multiplier the transmitted light tends to at grazing angles. */
+  tint: Color;
+  strength: number;
+  power: number;
+}
+
+/**
+ * Applies ACES only to the specular/clearcoat terms (see above). With `edge`, the
+ * transmitted light is also darkened toward an ink tint at grazing angles, which is
+ * what a real slab's walls and rounded edges look like against a light ground.
+ */
+export function useHighlightToneMapping(material: MeshPhysicalMaterial, exposure = 1, edge?: EdgeOptions): void {
   material.toneMapped = false;
   material.onBeforeCompile = (shader) => {
     shader.uniforms.s7Exposure = { value: exposure };
+    shader.uniforms.s7EdgeTint = { value: edge?.tint ?? new Color(1, 1, 1) };
+    shader.uniforms.s7Edge = { value: new Vector2(edge?.strength ?? 0, edge?.power ?? 1) };
     shader.fragmentShader = shader.fragmentShader
-      .replace('void main() {', `${HIGHLIGHT_TONEMAP}\nvoid main() {`)
+      .replace('void main() {', `${HIGHLIGHT_TONEMAP}\nuniform vec3 s7EdgeTint;\nuniform vec2 s7Edge;\nvoid main() {`)
       .replace(
         'vec3 outgoingLight = totalDiffuse + totalSpecular + totalEmissiveRadiance;',
-        'vec3 outgoingLight = totalDiffuse + s7Highlight( totalSpecular ) + totalEmissiveRadiance;',
+        `float s7Rim = s7Edge.x * pow( 1.0 - saturate( abs( dot( geometryNormal, geometryViewDir ) ) ), s7Edge.y );
+        totalDiffuse *= mix( vec3( 1.0 ), s7EdgeTint, saturate( s7Rim ) );
+        vec3 outgoingLight = totalDiffuse + s7Highlight( totalSpecular ) + totalEmissiveRadiance;`,
       )
       .replace(
         '( clearcoatSpecularDirect + clearcoatSpecularIndirect ) * material.clearcoat;',
         's7Highlight( ( clearcoatSpecularDirect + clearcoatSpecularIndirect ) * material.clearcoat );',
       );
   };
-  material.customProgramCacheKey = () => `s7-highlight-${exposure}`;
+  material.customProgramCacheKey = () => `s7-highlight-${exposure}-${edge ? 'edge' : 'plain'}`;
 }
 
 export function createGlassMaterial(options: GlassOptions = {}): MeshPhysicalMaterial {

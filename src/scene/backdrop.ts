@@ -10,14 +10,15 @@ import {
   OneFactor,
   PlaneGeometry,
   RGBAFormat,
+  RepeatWrapping,
   SRGBColorSpace,
   ShaderMaterial,
   ZeroFactor,
 } from 'three';
 
 /** Bench card size in lens units (lens radius = 1). */
-export const BENCH_W = 4.6;
-export const BENCH_H = 3.0;
+export const BENCH_W = 3.2;
+export const BENCH_H = 2.9;
 
 const BENCH_VERT = /* glsl */ `
   varying vec2 vUv;
@@ -39,13 +40,47 @@ const BENCH_FRAG = /* glsl */ `
   }
 `;
 
+/** Multiplies `ctx` by a soft-edged rectangle (in canvas px), fading marks to zero outside it. */
+function maskRect(ctx: CanvasRenderingContext2D, x0: number, x1: number, y0: number, y1: number, feather: number): void {
+  const W = ctx.canvas.width;
+  const H = ctx.canvas.height;
+  ctx.save();
+  ctx.globalAlpha = 1;
+  ctx.globalCompositeOperation = 'destination-in';
+  const gx = ctx.createLinearGradient(x0 - feather, 0, x1 + feather, 0);
+  const fx = feather / (x1 - x0 + 2 * feather);
+  gx.addColorStop(0, 'rgba(0,0,0,0)');
+  gx.addColorStop(fx, 'rgba(0,0,0,1)');
+  gx.addColorStop(1 - fx, 'rgba(0,0,0,1)');
+  gx.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gx;
+  ctx.fillRect(0, 0, W, H);
+  const gy = ctx.createLinearGradient(0, y0 - feather, 0, y1 + feather);
+  const fy = feather / (y1 - y0 + 2 * feather);
+  gy.addColorStop(0, 'rgba(0,0,0,0)');
+  gy.addColorStop(fy, 'rgba(0,0,0,1)');
+  gy.addColorStop(1 - fy, 'rgba(0,0,0,1)');
+  gy.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = gy;
+  ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+}
+
+/**
+ * Test card the lens refracts. Everything sits within ~1.4 lens radii of the optic,
+ * and every stroke is either crisp ink or a flat ink tint, so the offset each slab
+ * applies reads as a clean break in a line.
+ */
 function drawBench(target: HTMLCanvasElement, bg: string, ink: string): void {
   const W = target.width;
   const H = target.height;
   const u = W / BENCH_W;
   const cx = W / 2;
   const cy = H / 2;
-  const hair = Math.max(1, u * 0.005);
+  const hair = Math.max(1, u * 0.0042);
+  const X = (v: number) => cx + v * u;
+  const Y = (v: number) => cy - v * u;
+  const snap = (v: number) => Math.round(v) + 0.5;
 
   const layer = document.createElement('canvas');
   layer.width = W;
@@ -53,112 +88,126 @@ function drawBench(target: HTMLCanvasElement, bg: string, ink: string): void {
   const m = layer.getContext('2d');
   const ctx = target.getContext('2d');
   if (!m || !ctx) return;
-
   m.fillStyle = ink;
   m.strokeStyle = ink;
+  m.lineCap = 'butt';
 
-  m.globalAlpha = 0.06;
-  m.font = `620 ${Math.round(1.95 * u)}px "Onest Variable", Onest, system-ui, sans-serif`;
+  m.globalAlpha = 0.15;
+  m.font = `680 ${Math.round(1.9 * u)}px "Onest Variable", Onest, system-ui, sans-serif`;
   m.textAlign = 'center';
   m.textBaseline = 'alphabetic';
   const glyph = m.measureText('S7');
-  const ascent = glyph.actualBoundingBoxAscent || 1.5 * u;
-  m.fillText('S7', cx + 0.04 * u, cy + ascent / 2);
+  const ascent = glyph.actualBoundingBoxAscent || 1.4 * u;
+  m.fillText('S7', X(0.02), cy + ascent / 2);
 
-  // Ruled test target: horizontal hairlines behind the optic make every lamella's offset legible.
+  // Ruled target with ruler-like weights: a periodic ruling alone would alias under a
+  // one-pitch shift, the heavier fifth lines keep each slab's offset unambiguous.
   const ruling = document.createElement('canvas');
   ruling.width = W;
   ruling.height = H;
   const r = ruling.getContext('2d');
   if (r) {
     r.fillStyle = ink;
-    const pitch = 0.055 * u;
-    const lineH = Math.max(1, u * 0.0045);
-    for (let y = cy - 1.05 * u; y <= cy + 1.05 * u; y += pitch) {
-      r.fillRect(cx - 1.3 * u, Math.round(y), 2.6 * u, lineH);
+    const pitch = 0.05 * u;
+    const rows = 20;
+    for (let k = -rows; k <= rows; k++) {
+      const major = k % 5 === 0;
+      const lineH = major ? Math.max(1.5, u * 0.0085) : Math.max(1, u * 0.004);
+      r.globalAlpha = major ? 0.42 : 0.2;
+      r.fillRect(X(-1.18), Math.round(cy + k * pitch - lineH / 2), 2.36 * u, lineH);
     }
-    r.globalCompositeOperation = 'destination-in';
-    const fade = r.createLinearGradient(cx - 1.3 * u, 0, cx + 1.3 * u, 0);
-    fade.addColorStop(0, 'rgba(0,0,0,0)');
-    fade.addColorStop(0.2, 'rgba(0,0,0,1)');
-    fade.addColorStop(0.8, 'rgba(0,0,0,1)');
-    fade.addColorStop(1, 'rgba(0,0,0,0)');
-    r.fillStyle = fade;
-    r.fillRect(0, 0, W, H);
-    const fadeY = r.createLinearGradient(0, cy - 1.05 * u, 0, cy + 1.05 * u);
-    fadeY.addColorStop(0, 'rgba(0,0,0,0)');
-    fadeY.addColorStop(0.25, 'rgba(0,0,0,1)');
-    fadeY.addColorStop(0.75, 'rgba(0,0,0,1)');
-    fadeY.addColorStop(1, 'rgba(0,0,0,0)');
-    r.fillStyle = fadeY;
-    r.fillRect(0, 0, W, H);
-    m.globalAlpha = 0.13;
+    maskRect(r, X(-1.02), X(1.02), Y(0.92), Y(-0.92), 0.16 * u);
+    m.globalAlpha = 1;
     m.drawImage(ruling, 0, 0);
   }
 
-  m.globalAlpha = 0.34;
+  m.lineWidth = hair;
+  m.globalAlpha = 0.36;
+  m.beginPath();
+  m.arc(cx, cy, 1.06 * u, 0, Math.PI * 2);
+  m.stroke();
+  m.beginPath();
+  for (let k = 0; k < 72; k++) {
+    const a = (k / 72) * Math.PI * 2;
+    const len = k % 6 === 0 ? 0.07 * u : 0.03 * u;
+    m.moveTo(cx + Math.cos(a) * 1.06 * u, cy + Math.sin(a) * 1.06 * u);
+    m.lineTo(cx + Math.cos(a) * (1.06 * u + len), cy + Math.sin(a) * (1.06 * u + len));
+  }
+  m.stroke();
+
+  // Paraxial rays converging on the focal point: diagonals break visibly at every slab edge.
+  m.globalAlpha = 0.5;
+  m.lineWidth = Math.max(1, u * 0.0055);
+  const focus = 1.3;
+  m.beginPath();
+  for (const h of [-0.78, -0.46, -0.16, 0.16, 0.46, 0.78]) {
+    m.moveTo(X(-1.14), Y(h));
+    m.lineTo(X(-0.9), Y(h));
+    m.lineTo(X(focus), Y(0));
+  }
+  m.stroke();
+
+  m.globalAlpha = 0.62;
   m.lineWidth = hair;
   m.beginPath();
-  m.moveTo(cx - 2.1 * u, cy);
-  m.lineTo(cx + 2.1 * u, cy);
-  for (let k = -20; k <= 20; k++) {
-    const x = Math.round(cx + k * 0.1 * u) + 0.5;
-    const len = k % 10 === 0 ? 0.13 * u : k % 5 === 0 ? 0.075 * u : 0.035 * u;
+  m.moveTo(X(-1.36), snap(cy));
+  m.lineTo(X(1.36), snap(cy));
+  m.moveTo(snap(cx), Y(1.18));
+  m.lineTo(snap(cx), Y(-1.18));
+  for (let k = -26; k <= 26; k++) {
+    const x = snap(X(k * 0.05));
+    const len = k % 10 === 0 ? 0.1 * u : k % 5 === 0 ? 0.06 * u : 0.028 * u;
     m.moveTo(x, cy);
     m.lineTo(x, cy - len);
   }
+  for (let k = -22; k <= 22; k++) {
+    if (k === 0) continue;
+    const y = snap(Y(k * 0.05));
+    const len = k % 10 === 0 ? 0.08 * u : k % 5 === 0 ? 0.05 * u : 0.022 * u;
+    m.moveTo(cx, y);
+    m.lineTo(cx + len, y);
+  }
   m.stroke();
 
-  m.globalAlpha = 0.18;
   m.beginPath();
-  for (const side of [-1, 1]) {
-    const x = Math.round(cx + side * 1.8 * u) + 0.5;
-    m.moveTo(x, cy - 1.2 * u);
-    m.lineTo(x, cy + 1.2 * u);
-    for (const edge of [-1, 1]) {
-      const y = Math.round(cy + edge * 1.08 * u) + 0.5;
-      m.moveTo(x, y);
-      m.lineTo(x - side * 0.42 * u, y);
+  m.arc(X(focus), cy, 0.022 * u, 0, Math.PI * 2);
+  m.fill();
+
+  // Registration corners.
+  m.globalAlpha = 0.55;
+  m.beginPath();
+  for (const sx of [-1, 1]) {
+    for (const sy of [-1, 1]) {
+      const x = snap(X(sx * 1.36));
+      const y = snap(Y(sy * 1.2));
+      m.moveTo(x - sx * 0.16 * u, y);
+      m.lineTo(x, y);
+      m.lineTo(x, y + sy * 0.16 * u);
     }
   }
-  m.moveTo(cx - 0.32 * u, Math.round(cy + 1.08 * u) + 0.5);
-  m.lineTo(cx + 0.32 * u, Math.round(cy + 1.08 * u) + 0.5);
   m.stroke();
 
   const mono = (size: number) => `500 ${Math.round(size * u)}px "IBM Plex Mono", ui-monospace, monospace`;
-  m.globalAlpha = 0.46;
-  m.font = mono(0.048);
+  m.globalAlpha = 0.62;
+  m.font = mono(0.042);
   m.textBaseline = 'top';
-  for (let k = -10; k <= 10; k += 10) {
-    m.textAlign = 'center';
-    m.fillText(k === 0 ? '0' : `${k > 0 ? '' : '\u2212'}${Math.abs(k)}`, cx + k * 0.1 * u, cy + 0.05 * u);
-  }
-  m.font = mono(0.052);
-  const labelY = cy - 1.18 * u;
+  m.textAlign = 'center';
+  for (const k of [-1, 1]) m.fillText(k < 0 ? '\u22121.0' : '1.0', X(k), cy + 0.03 * u);
+  m.fillText('F', X(focus), cy + 0.045 * u);
+  m.font = mono(0.046);
   m.textAlign = 'left';
-  m.fillText('S7 / OPTICAL BENCH', cx - 1.74 * u, labelY);
-  m.fillText('n 1.480 \u00b7 f 42.0 mm', cx - 1.74 * u, cy + 0.98 * u);
+  m.textBaseline = 'alphabetic';
+  m.fillText('S7 / OPTICAL BENCH', X(-1.3), Y(1.13));
+  m.textBaseline = 'top';
+  m.fillText('n 1.480 \u00b7 f 42.0 mm', X(-1.3), Y(-1.13));
   m.textAlign = 'right';
-  m.fillText('\u03bb 587.6 nm', cx + 1.74 * u, labelY);
-  m.fillText('07 LAMELLAE', cx + 1.74 * u, cy + 0.98 * u);
+  m.textBaseline = 'alphabetic';
+  m.fillText('\u03bb 587.6 nm', X(1.3), Y(1.13));
+  m.textBaseline = 'top';
+  m.fillText('07 LAMELLAE', X(1.3), Y(-1.13));
 
-  // Fade every mark to zero well inside the card, so its border is the pure background colour.
-  m.globalAlpha = 1;
-  m.globalCompositeOperation = 'destination-in';
-  const gx = m.createLinearGradient(0, 0, W, 0);
-  gx.addColorStop(0, 'rgba(0,0,0,0)');
-  gx.addColorStop(0.09, 'rgba(0,0,0,1)');
-  gx.addColorStop(0.91, 'rgba(0,0,0,1)');
-  gx.addColorStop(1, 'rgba(0,0,0,0)');
-  m.fillStyle = gx;
-  m.fillRect(0, 0, W, H);
-  const gy = m.createLinearGradient(0, 0, 0, H);
-  gy.addColorStop(0, 'rgba(0,0,0,0)');
-  gy.addColorStop(0.06, 'rgba(0,0,0,1)');
-  gy.addColorStop(0.94, 'rgba(0,0,0,1)');
-  gy.addColorStop(1, 'rgba(0,0,0,0)');
-  m.fillStyle = gy;
-  m.fillRect(0, 0, W, H);
+  // The card border must be the exact background colour.
+  maskRect(m, X(-1.44), X(1.44), Y(1.3), Y(-1.3), 0.1 * u);
 
   ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = 1;
@@ -221,6 +270,106 @@ export class Bench {
   }
 }
 
+/** Opaque-pass multiply (kept non-transparent so the transmission pass still sees it). */
+const MULTIPLY = {
+  blending: CustomBlending,
+  blendEquation: AddEquation,
+  blendSrc: DstColorFactor,
+  blendDst: ZeroFactor,
+  blendSrcAlpha: ZeroFactor,
+  blendDstAlpha: OneFactor,
+  depthTest: false,
+  depthWrite: false,
+} as const;
+
+const RAIL_FRAG = /* glsl */ `
+  uniform sampler2D map;
+  uniform float strength;
+  uniform float repeat;
+  varying vec2 vUv;
+  void main() {
+    float marks = texture2D(map, vec2(vUv.x, vUv.y * repeat)).r;
+    float fade = smoothstep(0.0, 0.08, vUv.y) * smoothstep(1.0, 0.92, vUv.y);
+    gl_FragColor = vec4(vec3(1.0 - marks * strength * fade), 1.0);
+    #include <colorspace_fragment>
+  }
+`;
+
+/** Rail texture: one lens unit tall, one wide; red channel is ink coverage. */
+function createRailTexture(): CanvasTexture {
+  const size = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = '#fff';
+    const c = size / 2;
+    ctx.globalAlpha = 0.5;
+    ctx.fillRect(c - 1, 0, 2, size);
+    for (let k = 0; k < 20; k++) {
+      const y = Math.round((k / 20) * size);
+      const half = k % 10 === 0 ? 0.3 : k % 5 === 0 ? 0.2 : 0.09;
+      ctx.globalAlpha = k % 5 === 0 ? 0.5 : 0.32;
+      ctx.fillRect(Math.round(c - half * size), y, Math.round(2 * half * size), k % 5 === 0 ? 3 : 2);
+    }
+  }
+  const texture = new CanvasTexture(canvas);
+  texture.wrapT = RepeatWrapping;
+  texture.magFilter = LinearFilter;
+  return texture;
+}
+
+/**
+ * Two tick rulers standing behind the lab shutters, at the viewport edges, so the
+ * louvres have something to refract without covering the bench content. Multiplied
+ * like the shadows, so while fading out they never paint over the bench card.
+ */
+export class Rails {
+  readonly meshes: Mesh<PlaneGeometry, ShaderMaterial>[] = [];
+  private readonly geometry = new PlaneGeometry(1, 1);
+  private readonly texture = createRailTexture();
+
+  constructor() {
+    for (let i = 0; i < 2; i++) {
+      const material = new ShaderMaterial({
+        name: 'S7 Lab Rail',
+        uniforms: {
+          map: { value: this.texture },
+          strength: { value: 0 },
+          repeat: { value: 1 },
+        },
+        vertexShader: BENCH_VERT,
+        fragmentShader: RAIL_FRAG,
+        ...MULTIPLY,
+      });
+      const mesh = new Mesh(this.geometry, material);
+      mesh.renderOrder = -1;
+      mesh.frustumCulled = false;
+      mesh.visible = false;
+      this.meshes.push(mesh);
+    }
+  }
+
+  /** `x`, `y`, `width`, `height` in world units on the bench plane; `unit` is one lens unit there. */
+  place(i: number, x: number, y: number, z: number, width: number, height: number, unit: number, strength: number): void {
+    const mesh = this.meshes[i];
+    mesh.visible = strength > 1e-3;
+    mesh.position.set(x, y, z);
+    mesh.scale.set(width, height, 1);
+    mesh.material.uniforms.strength.value = strength;
+    mesh.material.uniforms.repeat.value = height / Math.max(1e-4, unit);
+  }
+
+  dispose(): void {
+    this.geometry.dispose();
+    this.texture.dispose();
+    for (const mesh of this.meshes) mesh.material.dispose();
+  }
+}
+
 const SHADOW_FRAG = /* glsl */ `
   uniform sampler2D map;
   uniform float strength;
@@ -278,14 +427,7 @@ export class LamellaShadows {
         },
         vertexShader: BENCH_VERT,
         fragmentShader: SHADOW_FRAG,
-        blending: CustomBlending,
-        blendEquation: AddEquation,
-        blendSrc: DstColorFactor,
-        blendDst: ZeroFactor,
-        blendSrcAlpha: ZeroFactor,
-        blendDstAlpha: OneFactor,
-        depthTest: false,
-        depthWrite: false,
+        ...MULTIPLY,
       });
       const mesh = new Mesh(this.geometry, material);
       mesh.renderOrder = -1;

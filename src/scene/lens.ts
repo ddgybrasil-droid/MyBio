@@ -13,7 +13,7 @@ import {
 } from 'three';
 import { state, type SectionId, type SocialId } from '../state';
 import { ANCHOR_IDS, AnchorTracker, SectionWeights, type AnchorId, type AnchorRect } from './anchors';
-import { BENCH_W, Bench, LamellaShadows } from './backdrop';
+import { BENCH_W, Bench, LamellaShadows, Rails } from './backdrop';
 import { DEG, clamp, damp, dampArray, easeOutCubic } from './damp';
 import { createGlassMaterial, createRoomEnvironment, useHighlightToneMapping } from './glass';
 import { LAMELLA_COUNT, LAMELLA_SPECS, createLamellaGeometries } from './lamellae';
@@ -36,13 +36,18 @@ const FOV = 24;
 const BENCH_DEPTH = 2.6;
 const RIPPLE_MS = 700;
 const BASE_DISPERSION = 0.35;
+/** Transmission thickness in lens radii; the refracted offset scales with it. */
+const THICKNESS = 5;
+/** Path lengths (in THICKNESS units) over which light takes on one full attenuation tint. */
+const TINT_DEPTH = 0.3;
 
 /** Lens radius in CSS px for an anchor rect, per section composition. */
 const FIT: Record<AnchorId, (r: AnchorRect) => number> = {
   hero: (r) => Math.min(r.w, r.h) * 0.46,
-  about: (r) => Math.min(r.w / 3.9, r.h / 2.3),
-  lab: (r) => Math.min(r.h * 0.46, r.w * 0.3),
-  contact: (r) => Math.min(r.w, r.h) * 0.45,
+  about: (r) => Math.min(r.w / 3.5, r.h / 2.2),
+  // Each louvre group spans ~1.05 radii: keep it inside the lab's widened side padding (main.css).
+  lab: (r) => Math.min(r.h * 0.46, Math.max(r.w * 0.08, 48)),
+  contact: (r) => Math.min(r.w * 0.27, r.h * 0.3),
 };
 
 interface Frame {
@@ -50,11 +55,12 @@ interface Frame {
   x: number;
   y: number;
   s: number;
-  /** Anchor half width in lens units (for the lab shutters). */
+  /** Anchor half extents in lens units (for the lab shutters). */
   hw: number;
+  hh: number;
 }
 
-const newFrame = (): Frame => ({ present: false, x: 0, y: 0, s: 1, hw: 1 });
+const newFrame = (): Frame => ({ present: false, x: 0, y: 0, s: 1, hw: 1, hh: 1 });
 
 const SOCIAL_ORDER: Record<SocialId, number> = { discord: -1, telegram: 0, tiktok: 1 };
 
@@ -93,15 +99,14 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
   scene.add(key, rim);
 
   const glass = createGlassMaterial({
-    thickness: 5,
+    thickness: THICKNESS,
     ior: 1.5,
     dispersion: lite ? 0 : BASE_DISPERSION,
-    attenuation: '#f1f5f2',
-    attenuationDistance: 40,
-    envMapIntensity: 0.75,
-    clearcoat: 0.4,
+    attenuation: '#c9d0cc',
+    envMapIntensity: 1,
+    clearcoat: 0.5,
   });
-  useHighlightToneMapping(glass, 1.1);
+  useHighlightToneMapping(glass, 1.15, { tint: new Color(0.03, 0.036, 0.034), strength: 0.9, power: 3 });
   const geometries: BufferGeometry[] = createLamellaGeometries(lite ? 'low' : 'high');
   const lens = new Group();
   const lamellae = geometries.map((geometry) => {
@@ -113,7 +118,10 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
 
   const bench = new Bench(background, tokenHex('canvas'), tokenHex('ink'), lite ? 1280 : 2048);
   scene.add(bench.mesh);
-  const shadows = new LamellaShadows(LAMELLA_COUNT, new Color(0.74, 0.77, 0.75));
+  const shadows = new LamellaShadows(LAMELLA_COUNT + 1, new Color(0.62, 0.66, 0.64));
+  const ground = shadows.meshes[LAMELLA_COUNT];
+  const rails = new Rails();
+  for (const mesh of rails.meshes) scene.add(mesh);
   for (const mesh of shadows.meshes) scene.add(mesh);
 
   if (document.fonts) {
@@ -212,6 +220,7 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
       f.y = -(r.cy - height / 2) * WPP;
       f.s = radius * WPP;
       f.hw = r.w / 2 / radius;
+      f.hh = r.h / 2 / radius;
     }
     return any;
   }
@@ -226,7 +235,7 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     for (const id of ANCHOR_IDS) total += sectionWeight(id);
     const fallback = total < 1e-4 ? ANCHOR_IDS.find((id) => frames[id].present) : undefined;
 
-    frame.x = frame.y = frame.s = frame.hw = 0;
+    frame.x = frame.y = frame.s = frame.hw = frame.hh = 0;
     clearPose(target);
     for (const id of ANCHOR_IDS) {
       const w = fallback ? (id === fallback ? 1 : 0) : sectionWeight(id) / total;
@@ -236,6 +245,7 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
       frame.y += f.y * w;
       frame.s += f.s * w;
       frame.hw += f.hw * w;
+      frame.hh += f.hh * w;
       switch (id) {
         case 'hero': {
           let turn = 0;
@@ -251,7 +261,8 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
           aboutPose(scratch);
           break;
         case 'lab':
-          labPose(scratch, f.hw);
+          // Below 900px the lab keeps its normal gutter, so the louvres bleed off the edges.
+          labPose(scratch, f.hw, f.hh, width < 900 ? 0.65 : 0);
           break;
         case 'contact':
           contactPose(scratch);
@@ -266,7 +277,7 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     if (social === socialTarget) return;
     socialTarget = social;
     if (!social) return;
-    const el = document.querySelector(`[data-social="${social}"]`);
+    const el = document.querySelector(`[data-social="${social}"], [data-social-trigger="${social}"]`);
     if (el) {
       const r = el.getBoundingClientRect();
       const px = ((r.left + r.width / 2 - width / 2) * WPP - frame.x) / Math.max(frame.s, 1e-3);
@@ -406,13 +417,37 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
       const gap = Math.max(0, (pz - zb) / Math.max(frame.s, 1e-3));
       const yaw = g[G.ry] + l[o + 4];
       const footprint = (Math.abs(Math.cos(yaw)) * spec.width + Math.abs(Math.sin(yaw)) * spec.depth * 1.6) * l[o + 6];
-      const blur = 1 + 0.08 * gap;
+      const blur = 1 + 0.04 * gap;
       const shadow = shadows.meshes[i];
-      shadow.position.set(px * t + 0.1 * gap * s, py * t - 0.16 * gap * s, zb);
+      shadow.position.set(px * t + 0.035 * gap * s, py * t - 0.06 * gap * s, zb);
       shadow.rotation.set(0, 0, g[G.rz] + l[o + 5]);
-      shadow.scale.set(footprint * 1.9 * blur * s * t, spec.height * l[o + 7] * 1.45 * blur * s * t, 1);
-      shadow.material.uniforms.strength.value = (clamp(g[G.shadow], 0, 1) * 0.42) / (1 + 0.25 * gap);
+      shadow.scale.set(footprint * 1.7 * blur * s * t, spec.height * l[o + 7] * 1.3 * blur * s * t, 1);
+      shadow.material.uniforms.strength.value = (clamp(g[G.shadow], 0, 1) * 0.34) / (1 + 0.2 * gap);
     }
+
+    // Soft pool under the optic, as if it stood just in front of the card.
+    const groundT = (camZ - zb) / camZ;
+    ground.position.set((lens.position.x + 0.12 * s) * groundT, (lens.position.y - 1.04 * s) * groundT, zb);
+    ground.rotation.set(0, 0, g[G.rz] * 0.5);
+    ground.scale.set(2.1 * s * groundT, 0.3 * s * groundT, 1);
+    ground.material.uniforms.strength.value = clamp(g[G.ground], 0, 1) * 0.6;
+
+    const railStrength = clamp(g[G.rails], 0, 1);
+    if (railStrength > 1e-3 || rails.meshes[0].visible) {
+      const unit = frame.s * k;
+      for (let side = 0; side < 2; side++) {
+        const from = side === 0 ? 0 : 4;
+        const to = side === 0 ? 4 : LAMELLA_COUNT;
+        let sx = 0;
+        for (let i = from; i < to; i++) sx += lamellae[i].matrixWorld.elements[12];
+        sx /= to - from;
+        const t = (camZ - zb) / camZ;
+        rails.place(side, sx * t, frame.y * k, zb, unit * 1.1, unit * frame.hh * 1.9, unit, railStrength);
+      }
+    }
+
+    // Keep the tint independent of the on-screen size (three scales the path by the model scale).
+    glass.attenuationDistance = (THICKNESS * s) / TINT_DEPTH;
 
     if (!lite) glass.dispersion = BASE_DISPERSION + 3 * rippleEnv;
   }
@@ -530,6 +565,7 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
       glass.dispose();
       bench.dispose();
       shadows.dispose();
+      rails.dispose();
       env.dispose();
       renderer.dispose();
     },
