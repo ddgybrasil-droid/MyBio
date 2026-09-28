@@ -46,7 +46,7 @@ export function createRoomEnvironment(renderer: WebGLRenderer, bench = true): Te
       if (!mesh.isMesh) return;
       if (mesh.position.z > 14) mesh.visible = false;
       const material = mesh.material as MeshStandardMaterial;
-      if (material.side === BackSide) material.color.setScalar(0.42);
+      if (material.side === BackSide) material.color.setScalar(0.62);
     });
     const material = new MeshBasicMaterial({ color: 0x111412 });
     for (const [x, y, z, sx, sy, sz] of FLAGS) {
@@ -148,7 +148,7 @@ export function createGlassMaterial(options: GlassOptions = {}): MeshPhysicalMat
     ior: options.ior ?? 1.48,
     dispersion: options.dispersion ?? 0,
     clearcoat: options.clearcoat ?? 0.35,
-    clearcoatRoughness: 0.02,
+    clearcoatRoughness: 0.05,
     specularIntensity: 1,
     attenuationColor: new Color(options.attenuation ?? '#eef3ef'),
     attenuationDistance: options.attenuationDistance ?? 2.6,

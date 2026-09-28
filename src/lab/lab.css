@@ -206,8 +206,8 @@
   padding: 4px;
   border-radius: 8px;
   background: var(--glass-regular-bg);
-  -webkit-backdrop-filter: blur(var(--glass-regular-blur)) saturate(1.3);
-  backdrop-filter: blur(var(--glass-regular-blur)) saturate(1.3);
+  -webkit-backdrop-filter: blur(var(--glass-regular-blur));
+  backdrop-filter: blur(var(--glass-regular-blur));
   box-shadow: var(--glass-edge);
 }
 
@@ -749,8 +749,8 @@ html[data-tier='0'] .lab-strip {
   padding: 4px 12px 4px 4px;
   border-radius: 8px;
   background: var(--glass-regular-bg);
-  -webkit-backdrop-filter: blur(var(--glass-regular-blur)) saturate(1.3);
-  backdrop-filter: blur(var(--glass-regular-blur)) saturate(1.3);
+  -webkit-backdrop-filter: blur(var(--glass-regular-blur));
+  backdrop-filter: blur(var(--glass-regular-blur));
   box-shadow: var(--glass-edge);
 }
 
@@ -775,6 +775,15 @@ html[data-tier='0'] .lab-poster__run {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
   box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+@media (pointer: coarse), (max-width: 767px) {
+  .lab-strip,
+  .lab-poster__run {
+    background: var(--surface-solid);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }
 
 .lab-poster__note {

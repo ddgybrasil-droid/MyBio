@@ -42,11 +42,11 @@
   --radius-md: 6px;
   --radius-pill: 999px;
 
-  --glass-clear-bg: rgba(247, 246, 240, 0.16);
-  --glass-clear-blur: 18px;
-  --glass-regular-bg: rgba(247, 246, 240, 0.66);
-  --glass-regular-blur: 28px;
-  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.72), inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+  --glass-clear-bg: rgba(255, 255, 255, 0.32);
+  --glass-clear-blur: 8px;
+  --glass-regular-bg: rgba(247, 246, 240, 0.88);
+  --glass-regular-blur: 10px;
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.92), inset 0 -1px 0 rgba(21, 24, 22, 0.16), inset 0 0 0 1px rgba(255, 255, 255, 0.34);
 
   --duration-press: 90ms;
   --duration-hover: 120ms;
