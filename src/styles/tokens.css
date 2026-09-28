@@ -1,0 +1,59 @@
+:root {
+  --canvas: #ecebe5;
+  --surface-solid: #f7f6f0;
+  --ink: #151816;
+  --ink-secondary: #5b615d;
+  --line: rgba(21, 24, 22, 0.16);
+  --line-strong: rgba(21, 24, 22, 0.32);
+  --void: #111412;
+  --void-line: rgba(247, 246, 240, 0.16);
+  --void-ink: #f7f6f0;
+  --void-ink-secondary: rgba(247, 246, 240, 0.64);
+  --action: #ff5633;
+  --focus: #006d67;
+  --focus-on-dark: #7fd6cf;
+  --specular: rgba(255, 255, 255, 0.72);
+
+  --brand-telegram: #229ed9;
+  --brand-tiktok-cyan: #25f4ee;
+  --brand-tiktok-red: #fe2c55;
+  --brand-discord: #5865f2;
+
+  --font-sans: 'Onest Variable', 'Onest', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --text-hero: clamp(3.25rem, 10vw, 9.5rem);
+  --text-section: clamp(2.25rem, 5vw, 5.25rem);
+  --text-body: clamp(1rem, 0.4vw + 0.9rem, 1.25rem);
+  --text-meta: 0.78rem;
+
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-6: 48px;
+  --space-8: 64px;
+  --section-gap: clamp(96px, 12vw, 208px);
+  --gutter: clamp(20px, 4.5vw, 72px);
+  --rail-height: 56px;
+  --max-width: 1600px;
+
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --radius-pill: 999px;
+
+  --glass-clear-bg: rgba(247, 246, 240, 0.16);
+  --glass-clear-blur: 18px;
+  --glass-regular-bg: rgba(247, 246, 240, 0.66);
+  --glass-regular-blur: 28px;
+  --glass-edge: inset 0 1px 0 rgba(255, 255, 255, 0.72), inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+
+  --duration-press: 90ms;
+  --duration-hover: 120ms;
+  --duration-state: 200ms;
+  --duration-morph: 320ms;
+  --duration-scene: 440ms;
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+}

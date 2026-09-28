@@ -1,0 +1,30 @@
+html:not([data-tier='0']) [data-specimen] {
+  position: relative;
+  cursor: grab;
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html:not([data-tier='0']) [data-specimen].is-dragging {
+  cursor: grabbing;
+}
+
+.specimen__canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity var(--duration-scene, 440ms) var(--ease-out, ease-out);
+}
+
+[data-specimen].is-live > .specimen__canvas {
+  opacity: 1;
+}
+
+html.reduced-motion .specimen__canvas {
+  transition-duration: 120ms;
+}

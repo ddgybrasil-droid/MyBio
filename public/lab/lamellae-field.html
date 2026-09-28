@@ -1,0 +1,337 @@
+<!doctype html>
+<!--
+  Магнитные ламели — S7 Open Bench · эксперимент 03
+  Автор: ASCEND / S7 · Лицензия: MIT
+
+  Тысячи тонких алюминиевых пластин стоят на листе, как железные опилки.
+  Указатель несёт магнитный диполь: B = (3(m·r̂)r̂ − m) / |r|³.
+  Каждая пластина — пружинный маятник: момент тянет её вдоль силовой линии
+  (пластина симметрична, поэтому угол берётся по модулю π), затухание
+  оставляет лёгкий перелёт. Где поле сильнее, пластины приподнимаются.
+  Всё поле — один InstancedMesh; матрицы пишутся прямо в буфер.
+
+  Управление: ведите указателем — это магнит; зажмите — усилить поле;
+  пробел или двойное касание — повернуть магнит на 45°.
+  Встраивание: окно принимает postMessage { type: 'pause' | 'resume' }.
+  Запуск: откройте файл в браузере с WebGL2 (three.js грузится с jsDelivr).
+-->
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Магнитные ламели — S7 Open Bench</title>
+<style>
+  :root { color-scheme: light; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #ecebe5; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .caption {
+    position: fixed; left: 16px; bottom: 16px; display: grid; gap: 2px; max-width: calc(100% - 32px);
+    padding: 10px 14px; border-radius: 6px; pointer-events: none;
+    font: 500 14px/1.3 'Onest Variable', 'Onest', system-ui, sans-serif; color: #151816;
+    background: rgba(247, 246, 240, 0.66); -webkit-backdrop-filter: blur(28px); backdrop-filter: blur(28px);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), inset 0 0 0 1px rgba(21, 24, 22, 0.12);
+  }
+  .caption span { font: 500 11px/1.4 'IBM Plex Mono', ui-monospace, monospace; letter-spacing: 0.06em; text-transform: uppercase; color: #5b615d; }
+  @media (prefers-reduced-transparency: reduce) {
+    .caption { background: #f7f6f0; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: inset 0 0 0 1px rgba(21, 24, 22, 0.32); }
+  }
+</style>
+<script>
+  window.__s7Fail = function (message) {
+    var cap = document.querySelector('.caption span');
+    if (cap) cap.textContent = message;
+    if (window.parent !== window) window.parent.postMessage({ source: 's7-lab', type: 'error', message: message }, '*');
+  };
+  window.__s7Watchdog = setTimeout(function () {
+    if (!window.__s7Started) window.__s7Fail('Не удалось загрузить three.js с cdn.jsdelivr.net');
+  }, 15000);
+</script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div class="caption" aria-live="polite"><strong>Магнитные ламели</strong><span id="readout">S7 · 03 — указатель — магнит, зажать — сильнее, пробел — повернуть</span></div>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+window.__s7Started = true;
+clearTimeout(window.__s7Watchdog);
+
+const PAPER = 0xecebe5;
+const INK = 0x151816;
+const embedded = window.parent !== window;
+const notify = (type, message) => embedded && window.parent.postMessage({ source: 's7-lab', type, message }, '*');
+
+if (!document.createElement('canvas').getContext('webgl2')) {
+  window.__s7Fail('Нужен браузер с поддержкой WebGL2');
+  throw new Error('WebGL2 unavailable');
+}
+
+const coarse = matchMedia('(pointer: coarse)').matches;
+const small = coarse || Math.min(window.innerWidth, window.innerHeight) < 600;
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+document.body.prepend(renderer.domElement);
+renderer.domElement.setAttribute('aria-label', 'Поле алюминиевых ламелей, выстроенных по линиям магнитного поля');
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(PAPER);
+const pmrem = new THREE.PMREMGenerator(renderer);
+const room = new RoomEnvironment();
+scene.environment = pmrem.fromScene(room, 0.04).texture;
+room.dispose?.();
+scene.environmentIntensity = 0.95;
+
+const camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 80);
+
+const sun = new THREE.DirectionalLight(0xffffff, 1.7);
+sun.position.set(-4, 9, 3.5);
+sun.castShadow = true;
+sun.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048);
+sun.shadow.camera.left = -9;
+sun.shadow.camera.right = 9;
+sun.shadow.camera.top = 7;
+sun.shadow.camera.bottom = -7;
+sun.shadow.camera.near = 1;
+sun.shadow.camera.far = 25;
+sun.shadow.bias = -0.0004;
+sun.shadow.normalBias = 0.015;
+sun.shadow.radius = 3;
+scene.add(sun);
+
+/* ---------- Floor: shadow catcher + hairline grid ---------- */
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 30), new THREE.ShadowMaterial({ color: INK, opacity: 0.2 }));
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+
+const gridPts = [];
+for (let x = -10; x <= 10; x += 1) gridPts.push(x, 0.001, -8, x, 0.001, 8);
+for (let z = -8; z <= 8; z += 1) gridPts.push(-10, 0.001, z, 10, 0.001, z);
+const gridGeo = new THREE.BufferGeometry();
+gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(gridPts, 3));
+scene.add(new THREE.LineSegments(gridGeo, new THREE.LineBasicMaterial({ color: INK, transparent: true, opacity: 0.1, toneMapped: false })));
+
+/* ---------- Lamellae ---------- */
+const SPACING = small ? 0.22 : 0.16;
+const COLS = Math.round((small ? 12 : 13.5) / SPACING);
+const ROWS = Math.round((small ? 8.5 : 8) / SPACING);
+const COUNT = COLS * ROWS;
+const H = 0.2;
+
+const plateGeo = new THREE.BoxGeometry(SPACING * 0.78, H, 0.012);
+plateGeo.translate(0, H / 2, 0);
+const plateMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: 0.3 });
+const plates = new THREE.InstancedMesh(plateGeo, plateMat, COUNT);
+plates.castShadow = true;
+plates.receiveShadow = true;
+plates.frustumCulled = false;
+plates.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+scene.add(plates);
+
+const px = new Float32Array(COUNT);
+const pz = new Float32Array(COUNT);
+const angle = new Float32Array(COUNT);
+const spin = new Float32Array(COUNT);
+const lift = new Float32Array(COUNT);
+const light = new THREE.Color(0xd9dcd8);
+const dark = new THREE.Color(0x4a504c);
+let rng = 7;
+const random = () => ((rng = (rng * 16807) % 2147483647) / 2147483647);
+
+for (let j = 0, i = 0; j < ROWS; j++) {
+  for (let k = 0; k < COLS; k++, i++) {
+    px[i] = (k - (COLS - 1) / 2) * SPACING + (j % 2) * SPACING * 0.5;
+    pz[i] = (j - (ROWS - 1) / 2) * SPACING;
+    angle[i] = (random() - 0.5) * 0.6;
+    plates.setColorAt(i, random() < 0.05 ? dark : light);
+  }
+}
+plates.instanceColor.needsUpdate = true;
+
+/* ---------- Magnet ---------- */
+const magnet = new THREE.Group();
+const puck = new THREE.Mesh(
+  new THREE.CylinderGeometry(0.26, 0.26, 0.12, 64),
+  new THREE.MeshPhysicalMaterial({ color: INK, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.1 }),
+);
+puck.castShadow = true;
+const bar = new THREE.Mesh(
+  new THREE.BoxGeometry(0.44, 0.02, 0.06),
+  new THREE.MeshStandardMaterial({ color: 0xe6e8e4, metalness: 1, roughness: 0.2 }),
+);
+bar.position.y = 0.07;
+const notch = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.022, 0.06), new THREE.MeshStandardMaterial({ color: INK, roughness: 0.5 }));
+notch.position.set(0.19, 0.072, 0);
+magnet.add(puck, bar, notch);
+magnet.position.y = 0.42;
+scene.add(magnet);
+
+/* ---------- Interaction ---------- */
+const raycaster = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+const ground = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+const hit = new THREE.Vector3();
+const target = new THREE.Vector2(0, 0);
+const pos = new THREE.Vector2(0, 0);
+let pointerActive = false;
+let lastPointer = -1e9;
+let pressed = false;
+let dipoleGoal = -0.4;
+let dipole = -0.4;
+let lastTap = 0;
+
+function toGround(event) {
+  const rect = renderer.domElement.getBoundingClientRect();
+  ndc.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+  raycaster.setFromCamera(ndc, camera);
+  if (raycaster.ray.intersectPlane(ground, hit)) {
+    target.set(THREE.MathUtils.clamp(hit.x, -7, 7), THREE.MathUtils.clamp(hit.z, -5, 5));
+    pointerActive = true;
+    lastPointer = performance.now();
+  }
+}
+
+const canvas = renderer.domElement;
+canvas.addEventListener('pointermove', toGround);
+canvas.addEventListener('pointerdown', (event) => {
+  toGround(event);
+  pressed = true;
+  canvas.setPointerCapture?.(event.pointerId);
+  const now = performance.now();
+  if (event.pointerType !== 'mouse' && now - lastTap < 320) dipoleGoal += Math.PI / 4;
+  lastTap = now;
+});
+const release = () => { pressed = false; };
+canvas.addEventListener('pointerup', release);
+canvas.addEventListener('pointercancel', release);
+canvas.addEventListener('dblclick', () => { dipoleGoal += Math.PI / 4; });
+window.addEventListener('keydown', (event) => {
+  if (event.code === 'Space') {
+    event.preventDefault();
+    dipoleGoal += Math.PI / 4;
+  }
+});
+
+/* ---------- Layout ---------- */
+function resize() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  const fit = 1 / Math.min(1, camera.aspect / 1.55);
+  camera.position.set(0, 8.4 * fit, 6.6 * fit);
+  camera.lookAt(0, 0, 0.35);
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+resize();
+
+/* ---------- Simulation ---------- */
+const m = plates.instanceMatrix.array;
+let time = 0;
+let last = 0;
+let strength = 1;
+let announced = false;
+
+function step(dt) {
+  time += dt;
+  if (pointerActive && performance.now() - lastPointer > 3500 && !pressed) pointerActive = false;
+  if (!pointerActive) target.set(Math.sin(time * 0.23) * 3.2, Math.sin(time * 0.31 + 1) * 1.6);
+  pos.lerp(target, 1 - Math.exp(-dt * (pointerActive ? 14 : 3)));
+
+  if (!pointerActive) dipoleGoal += dt * 0.12;
+  dipole += (dipoleGoal - dipole) * (1 - Math.exp(-dt * 6));
+  strength += ((pressed ? 2.4 : 1) - strength) * (1 - Math.exp(-dt * 5));
+
+  const mx = Math.cos(dipole) * strength;
+  const mz = -Math.sin(dipole) * strength;
+  magnet.position.x = pos.x;
+  magnet.position.z = pos.y;
+  magnet.rotation.y = dipole;
+  magnet.position.y = 0.42 + (strength - 1) * 0.04;
+
+  for (let i = 0; i < COUNT; i++) {
+    const rx = px[i] - pos.x;
+    const rz = pz[i] - pos.y;
+    const r2 = rx * rx + rz * rz + 0.06;
+    const r = Math.sqrt(r2);
+    const ux = rx / r;
+    const uz = rz / r;
+    const dot = mx * ux + mz * uz;
+    const inv = 1 / (r2 * r);
+    const bx = (3 * dot * ux - mx) * inv + 0.02;
+    const bz = (3 * dot * uz - mz) * inv;
+    const b = Math.sqrt(bx * bx + bz * bz);
+    const sat = b / (b + 0.35);
+
+    const goal = Math.atan2(-bz, bx);
+    let d = goal - angle[i];
+    d -= Math.PI * Math.round(d / Math.PI);
+    const k = 6 + 90 * sat;
+    const c = 2 * Math.sqrt(k) * 0.32;
+    spin[i] += (k * d - c * spin[i]) * dt;
+    angle[i] += spin[i] * dt;
+
+    const liftGoal = 0.11 * sat * sat * strength;
+    lift[i] += (liftGoal - lift[i]) * (1 - Math.exp(-dt * 8));
+
+    const a = angle[i];
+    const cs = Math.cos(a);
+    const sn = Math.sin(a);
+    const sy = 1 + 0.9 * sat * sat;
+    const o = i * 16;
+    m[o] = cs; m[o + 1] = 0; m[o + 2] = -sn; m[o + 3] = 0;
+    m[o + 4] = 0; m[o + 5] = sy; m[o + 6] = 0; m[o + 7] = 0;
+    m[o + 8] = sn; m[o + 9] = 0; m[o + 10] = cs; m[o + 11] = 0;
+    m[o + 12] = px[i]; m[o + 13] = lift[i]; m[o + 14] = pz[i]; m[o + 15] = 1;
+  }
+  plates.instanceMatrix.needsUpdate = true;
+}
+
+function frame(now) {
+  const dt = last ? Math.min((now - last) / 1000, 1 / 20) : 1 / 60;
+  last = now;
+  const sub = dt > 1 / 45 ? 2 : 1;
+  for (let s = 0; s < sub; s++) step(dt / sub);
+  renderer.render(scene, camera);
+  if (!announced) {
+    announced = true;
+    notify('ready');
+  }
+}
+
+function setRunning(on) {
+  last = 0;
+  renderer.setAnimationLoop(on ? frame : null);
+}
+
+window.addEventListener('message', (event) => {
+  const type = event.data && event.data.type;
+  if (type === 'pause') setRunning(false);
+  else if (type === 'resume') setRunning(true);
+});
+
+canvas.addEventListener('webglcontextlost', (event) => {
+  event.preventDefault();
+  setRunning(false);
+});
+canvas.addEventListener('webglcontextrestored', () => setRunning(true));
+
+setRunning(true);
+</script>
+</body>
+</html>
