@@ -62,61 +62,42 @@ function smooth(a: number, b: number, t: number): number {
 }
 
 /**
- * Opening chapter, scrubbed 1:1 with `story` (no gimbal, no barrel peel):
- * - 0.00–0.14 hold the assembled optic
- * - 0.10–0.40 open spacing + optical-axis depth, then hold the stack
- * - 0.18–0.70 a short glance (about 14°) so the depth reads — not an orbit
- * - 0.74–1.00 settle back into a quiet resolved stack for About
+ * Pinned hero chapter, scrubbed from `story` (no barrel peel, no fly-by):
+ * - 0.00–0.10 assembled hold
+ * - 0.08–0.42 equidistant Y separation, linear with scroll (equal gaps)
+ * - 0.42–0.78 hold the separated stack; a few degrees of yaw only so refraction reads
+ * - 0.78–1.00 compress back to the assembled stack for the Work match-cut
  *
- * `heroPose(p, 0.7)` stays at peak separation for the specimen card.
+ * `heroPose(p, 0.7)` is still fully separated for the specimen card.
  */
 export function heroPose(p: Pose, story: number): void {
   const t = clamp01(story);
-  const open = smooth(0.1, 0.38, t) * (1 - smooth(0.74, 0.94, t));
-  const glance = clamp01((t - 0.18) / 0.52);
-  const settle = smooth(0.74, 1, t);
+  const rise = clamp01((t - 0.08) / 0.34);
+  const gap = rise * (1 - smooth(0.78, 0.96, t));
+  // Equal step between neighbours. Y is the separation axis so the slabs stay face-on.
+  const step = 0.4;
 
   for (const s of LAMELLA_SPECS) {
     const i = s.index;
     const k = i - 3;
-    // Lateral spacing so each plate reads; depth along the optical axis, ordered.
-    // Rotations stay at the quiet stagger — slabs do not tumble or peel.
-    const px = s.x * (1 + 0.62 * open);
-    const py = s.y * (1 + 0.06 * open);
-    const pz = STAGGER_Z[i] * (1 - 0.65 * open) - k * (0.045 + 0.36 * open);
-    const rx = STAGGER_PITCH[i] * (1 - 0.55 * open) * DEG;
-    const ry = STAGGER_YAW[i] * (1 - 0.65 * open) * DEG;
-    const rz = STAGGER_ROLL[i] * (1 - 0.8 * open) * DEG;
-    const sz = 1 + 0.1 * open;
-    set(p, i, px, py, pz, rx, ry, rz, 1, 1, sz);
+    const px = s.x;
+    const py = s.y + k * step * gap;
+    const pz = STAGGER_Z[i] * (1 - 0.8 * gap) - k * 0.055 * gap;
+    const rx = STAGGER_PITCH[i] * (1 - 0.9 * gap) * DEG;
+    const ry = STAGGER_YAW[i] * (1 - 0.9 * gap) * DEG;
+    const rz = STAGGER_ROLL[i] * (1 - gap) * DEG;
+    set(p, i, px, py, pz, rx, ry, rz, 1, 1, 1);
   }
 
-  const yaw = (-4 + 14 * glance - 8 * settle) * DEG;
-  const pitch = (2.5 + 7 * open - 1.5 * settle) * DEG;
-  const scale = 1 + 0.025 * open - 0.035 * settle;
-  group(p, pitch, yaw, 0, 1, 1, 1, scale);
-  p.group[G.oy] = 0.03 * open;
+  // Camera is secondary: a short yaw/pitch while the gaps are open, then back to rest.
+  const yaw = 9 * gap * DEG;
+  const pitch = (2.2 + 4.5 * gap) * DEG;
+  group(p, pitch, yaw, 0, 1 - 0.35 * smooth(0.82, 1, t), 1, 1, 1 - 0.08 * gap);
 }
 
-/** Resolved stack — the same stance the hero settles into, held for the About column. */
+/** Settled stack — where the hero compresses before it docks into Work. */
 export function aboutPose(p: Pose): void {
   heroPose(p, 1);
-  for (const s of LAMELLA_SPECS) {
-    const i = s.index;
-    const o = i * STRIDE;
-    p.lam[o] = s.x * 1.14;
-    p.lam[o + 1] = s.y;
-    p.lam[o + 2] = STAGGER_Z[i] - (i - 3) * 0.055;
-    p.lam[o + 3] = STAGGER_PITCH[i] * 0.45 * DEG;
-    p.lam[o + 4] = STAGGER_YAW[i] * 0.35 * DEG;
-    p.lam[o + 5] = 0;
-    p.lam[o + 8] = 1;
-  }
-  p.group[G.rx] = 2.5 * DEG;
-  p.group[G.ry] = 4 * DEG;
-  p.group[G.rz] = 0;
-  p.group[G.scale] = 0.96;
-  p.group[G.oy] = 0;
 }
 
 /**

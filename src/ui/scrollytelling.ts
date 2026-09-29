@@ -5,9 +5,9 @@ import { state } from '../state';
 gsap.registerPlugin(ScrollTrigger);
 
 const PHASE_LABELS = [
-  { until: 0.16, status: 'State / assembled', rotation: 'Hold / quiet', planes: 'Focus stack / 07' },
-  { until: 0.74, status: 'State / open', rotation: 'Axis / depth', planes: 'Spacing / reveal' },
-  { until: 1.01, status: 'State / settle', rotation: 'Resolved / still', planes: 'Handoff / about' },
+  { until: 0.12, status: 'State / assembled', rotation: 'Hold / quiet', planes: 'Focus stack / 07' },
+  { until: 0.78, status: 'State / separate', rotation: 'Gap / equal', planes: 'Seven planes / open' },
+  { until: 1.01, status: 'State / settle', rotation: 'Compressed', planes: 'Match / work' },
 ] as const;
 
 function phaseFor(progress: number): (typeof PHASE_LABELS)[number] {
@@ -75,9 +75,8 @@ export function initScrollytelling(): void {
           return;
         }
 
-        // Story completes while the hero grid is pinned, so the reveal does not
-        // play during the flight into About.
-        const storyScrub = desktop ? 0.22 : 0.18;
+        // Heavy scrub lag: the pose is a function of progress, the follow is liquid.
+        const storyScrub = desktop ? 1.05 : 0.85;
         ScrollTrigger.create({
           trigger: hero,
           start: 'top top',
@@ -105,8 +104,8 @@ export function initScrollytelling(): void {
           chapter.fromTo(
             heroCopy,
             { yPercent: 0, autoAlpha: 1 },
-            { yPercent: desktop ? 14 : 8, autoAlpha: 0, duration: 0.42 },
-            0.06,
+            { yPercent: desktop ? 10 : 6, autoAlpha: 0, duration: 0.28 },
+            0.04,
           );
         }
 
@@ -114,30 +113,9 @@ export function initScrollytelling(): void {
           chapter.fromTo(
             heroTitle,
             { fontVariationSettings: '"wght" 515' },
-            { fontVariationSettings: '"wght" 460', duration: 0.42 },
-            0.06,
+            { fontVariationSettings: '"wght" 470', duration: 0.28 },
+            0.04,
           );
-        }
-
-        if (lensField && desktop) {
-          chapter.fromTo(
-            lensField,
-            { scale: 1, xPercent: 0, yPercent: 0 },
-            { scale: 1.06, xPercent: -2, yPercent: 1, duration: 0.34 },
-            0.1,
-          );
-          chapter.to(lensField, { scale: 1, xPercent: 0, yPercent: 0, duration: 0.24 }, 0.74);
-        }
-
-        if (lensField && !desktop) {
-          // Bring the optic into the frame for the scrub, then settle it back before the pin releases.
-          chapter.fromTo(
-            lensField,
-            { scale: 1, xPercent: 0, yPercent: 0 },
-            { scale: 1.55, xPercent: -30, yPercent: 26, duration: 0.36 },
-            0.08,
-          );
-          chapter.to(lensField, { scale: 1.05, xPercent: -8, yPercent: 4, duration: 0.24 }, 0.74);
         }
 
         if (heroSocials) {

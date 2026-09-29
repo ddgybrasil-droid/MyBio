@@ -150,7 +150,7 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
   const target = createPose();
   const current = createPose();
   const display = createPose();
-  const lastRendered = new Float32Array(display.lam.length + display.group.length + 8);
+  const lastRendered = new Float32Array(display.lam.length + display.group.length + 10);
 
   let width = 1;
   let height = 1;
@@ -159,6 +159,11 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
   /** 1 on a single anchor; dips toward 0 while hero and about would otherwise slide into each other. */
   let anchorPresence = 1;
   let dominantAnchor: AnchorId | null = null;
+  /** Center-stage chapter (hero pin through the Work dock). Lab and contact opt out. */
+  let chapter = false;
+  /** 0 while Work is still below the fold, 1 once the optic must be gone. */
+  let exitT = 0;
+  let opticDissolve = 0;
   const coarse = matchMedia('(pointer: coarse)').matches;
 
   function applySize(): void {
@@ -285,7 +290,11 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
 
     frame.x = frame.y = frame.s = frame.hw = frame.hh = 0;
     clearPose(target);
-    if (total < 1e-4) return;
+    if (total < 1e-4) {
+      chapter = false;
+      exitT = 0;
+      return;
+    }
 
     for (const id of ANCHOR_IDS) {
       const w = weights[id] / total;
@@ -319,11 +328,99 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     const crossing =
       dominantNow !== dominantAnchor &&
       (dominantNow === 'hero' || dominantNow === 'about' || dominantAnchor === 'hero' || dominantAnchor === 'about');
-    if (crossing) {
+    if (crossing && !inChapter()) {
       current.lam.set(target.lam);
       current.group.set(target.group);
     }
     dominantAnchor = dominantNow;
+    lockChapterFrame();
+  }
+
+  /** Gap window shared with heroPose: open, hold, compress. */
+  function separationAmount(story: number): number {
+    const t = clamp(story, 0, 1);
+    const rise = clamp((t - 0.08) / 0.34, 0, 1);
+    return rise * (1 - smoothstep(0.78, 0.96, t));
+  }
+
+  function inChapter(): boolean {
+    if (state.reducedMotion) return false;
+    if (sectionWeight('lab') >= 0.25 || sectionWeight('contact') >= 0.2) return false;
+    if (sectionWeight('hero') > 0.02 || sectionWeight('about') > 0.02) return true;
+    return state.handoff > 0.02 && state.handoff < 0.98;
+  }
+
+  /**
+   * Work approach: 0 when the chamber top is at 115% of the viewport,
+   * 1 when it reaches 62% — before the heading is readable.
+   */
+  function readExit(): number {
+    const work = document.getElementById('work');
+    if (!work) return 0;
+    const top = work.getBoundingClientRect().top;
+    const start = height * 1.15;
+    const end = height * 0.62;
+    return clamp((start - top) / Math.max(1, start - end), 0, 1);
+  }
+
+  /**
+   * Pin the stack at viewport centre for the scrub, then sink it toward the
+   * first specimen stage (or a card-sized lower-centre dock) as Work arrives.
+   * Position is applied directly so the match-cut is not lagged by pose damping.
+   */
+  function lockChapterFrame(): void {
+    chapter = inChapter();
+    exitT = chapter ? readExit() : 0;
+    if (!chapter || frame.s <= 0) return;
+
+    const mobile = width < 900;
+    // Outer slab sits ~1.7 radii off centre when the gap is open; keep that inside the frame.
+    const stageS = Math.min(width, height) * (mobile ? 0.33 : 0.26) * WPP;
+    const stageY = height * 0.015 * WPP;
+
+    let dockX = 0;
+    let dockY = -height * 0.3 * WPP;
+    let dockS = Math.min(width, height) * (mobile ? 0.105 : 0.09) * WPP;
+
+    const specimen = document.querySelector('[data-specimen="lens"]');
+    const work = document.getElementById('work');
+    const workTop = work ? work.getBoundingClientRect().top : height;
+    if (specimen) {
+      const r = specimen.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      const inLowerFrame = r.width > 32 && r.height > 32 && cy > height * 0.42 && cy < height * 0.96 && r.top > workTop;
+      if (inLowerFrame) {
+        dockX = (cx - width / 2) * WPP;
+        dockY = -(cy - height / 2) * WPP;
+        dockS = Math.min(r.width, r.height) * 0.34 * WPP;
+      }
+    }
+
+    const u = exitT * exitT * (3 - 2 * exitT);
+    frame.present = true;
+    frame.x = dockX * u;
+    frame.y = stageY + (dockY - stageY) * u;
+    frame.s = stageS + (dockS - stageS) * u;
+    frame.hw = 1;
+    frame.hh = 1;
+  }
+
+  /** True when rods would still read in the cream above a Work heading that is already in frame. */
+  function headingOwnsFrame(): boolean {
+    if (!chapter && state.handoff < 0.12) return false;
+    const heading = document.querySelector('#work .work__heading');
+    const work = document.getElementById('work');
+    if (!heading || !work) return false;
+    const hr = heading.getBoundingClientRect();
+    if (hr.bottom < height * 0.04 || hr.top > height * 0.8) return false;
+    const wr = work.getBoundingClientRect();
+    const cx = frame.x / WPP + width / 2;
+    const cy = height / 2 - frame.y / WPP;
+    const rad = Math.max(28, (frame.s / WPP) * 1.25);
+    const centerInHeading = cx > hr.left && cx < hr.right && cy > hr.top && cy < hr.bottom;
+    const sticksIntoCream = cy - rad < wr.top - 2;
+    return centerInHeading || sticksIntoCream;
   }
 
   function updateSocialTarget(): void {
@@ -433,27 +530,22 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
 
   function applyDisplay(rippleEnv: number): void {
     const g = display.group;
-    const storyT = clamp(state.story, 0, 1);
-    const openCam = smoothstep(0.1, 0.4, storyT) * (1 - smoothstep(0.74, 0.96, storyT));
-    const settleCam = smoothstep(0.72, 1, storyT);
-    const release = clamp(state.handoff, 0, 1);
-    // Retreat in scale/z first so the glass stays crisp, then dissolve the last of it.
-    const retreat = smoothstep(0, 0.7, release);
-    const dissolve = smoothstep(0.4, 0.9, release);
-    const dolly = 1 - 0.07 * openCam + 0.1 * settleCam + 0.34 * retreat;
+    const storyT = state.reducedMotion ? 0 : clamp(state.story, 0, 1);
+    // Camera is secondary: a short dolly only while the slabs are separated, to catch refraction.
+    const dolly = 1 - 0.06 * separationAmount(storyT);
     camera.position.z = cameraZBase * dolly;
 
-    const retreatScale = (1 - 0.9 * retreat) * anchorPresence;
-    const s = frame.s * g[G.scale] * Math.max(0.04, retreatScale);
-    // Lift away from the Work heading as it rises, and push back in z so the optic recedes.
-    lens.position.set(
-      frame.x + g[G.ox] * frame.s,
-      frame.y + g[G.oy] * frame.s + frame.s * 0.72 * retreat,
-      -frame.s * 1.85 * retreat,
-    );
+    let dissolve = chapter ? smoothstep(0.42, 0.9, exitT) : 0;
+    if (!chapter && state.handoff > 0.42) dissolve = 1;
+    if (headingOwnsFrame()) dissolve = 1;
+    opticDissolve = dissolve;
+
+    const presence = chapter ? 1 : anchorPresence;
+    const s = frame.s * g[G.scale] * Math.max(0.04, presence);
+    lens.position.set(frame.x + g[G.ox] * frame.s, frame.y + g[G.oy] * frame.s, 0);
     lens.rotation.set(g[G.rx], g[G.ry], g[G.rz]);
     lens.scale.setScalar(s);
-    const showOptic = dissolve < 0.97 && anchorPresence > 0.05 && retreatScale > 0.06;
+    const showOptic = dissolve < 0.96 && presence > 0.05;
     lens.visible = showOptic;
     for (let i = 0; i < LAMELLA_COUNT; i++) {
       const o = i * STRIDE;
@@ -470,7 +562,8 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     const k = (camZ - zb) / camZ;
     bench.mesh.position.set(frame.x * k, frame.y * k, zb);
     bench.mesh.scale.setScalar(frame.s * k);
-    bench.strength = clamp(g[G.bench], 0, 1) * (showOptic ? 1 : 0);
+    const benchFade = showOptic ? 1 - smoothstep(0, 0.4, chapter ? exitT : 0) : 0;
+    bench.strength = clamp(g[G.bench], 0, 1) * benchFade;
 
     for (let i = 0; i < LAMELLA_COUNT; i++) {
       const spec = LAMELLA_SPECS[i];
@@ -517,12 +610,13 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     glass.attenuationDistance = (THICKNESS * s) / TINT_DEPTH;
 
     if (!lite) glass.dispersion = BASE_DISPERSION + 2.2 * rippleEnv;
-    // Opacity only in the last part of the retreat. A long opacity fade milks transmission
-    // and leaves rods ghosted over the heading; scale/z do the actual handoff.
-    if (dissolve > 0.04) {
+    // Opacity only at the tail of the exit. A long fade milks transmission and ghosts rods
+    // over the heading; the dock scale does the handoff, then the mesh hard-hides.
+    if (dissolve > 0.55) {
+      const fade = smoothstep(0.55, 0.94, dissolve);
       glass.transparent = true;
-      glass.opacity = 1 - dissolve;
-      glass.depthWrite = dissolve < 0.4;
+      glass.opacity = 1 - fade;
+      glass.depthWrite = fade < 0.3;
     } else {
       glass.transparent = false;
       glass.opacity = 1;
@@ -548,6 +642,8 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     push(glass.opacity);
     push(state.handoff);
     push(anchorPresence);
+    push(exitT);
+    push(opticDissolve);
     push(camera.position.z);
     return delta > 1e-5;
   }
@@ -565,10 +661,13 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     lastNow = now;
     if (lost) return;
     darkSmooth = state.reducedMotion ? state.dark : damp(darkSmooth, state.dark, 6.5, dt);
-    if (darkSmooth >= 0.992 || state.handoff >= 0.995) {
+    // Clear only once the chamber owns the view. Handoff alone must keep rendering
+    // so the dock can finish before the heading is on screen.
+    if (darkSmooth >= 0.992 && state.handoff >= 0.98) {
       if (!wasDark) {
         renderer.setClearColor(background, 1);
         renderer.clear();
+        lens.visible = false;
       }
       wasDark = true;
       forceRender = false;
@@ -586,9 +685,9 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
       current.group.set(target.group);
       hasPose = true;
     } else {
-      // Tight tracking during the hero scrub so the pose stays locked to scroll, not chasing it.
-      const tracking = state.story > 0.01 && state.story < 0.995 && sectionWeight('hero') > 0.45;
-      const rate = tracking ? 22 : 8;
+      // Heavy liquid follow while the hero scrub is the timeline. The dock position is not damped.
+      const tracking = chapter && state.story > 0.02 && state.story < 0.98 && sectionWeight('hero') > 0.35;
+      const rate = tracking ? 4.2 : 8;
       dampArray(current.lam, target.lam, rate, dt);
       dampArray(current.group, target.group, rate, dt);
     }
