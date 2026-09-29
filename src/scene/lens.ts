@@ -14,7 +14,7 @@ import {
 import { state, type SectionId, type SocialId } from '../state';
 import { ANCHOR_IDS, AnchorTracker, SectionWeights, type AnchorId, type AnchorRect } from './anchors';
 import { BENCH_W, Bench, LamellaShadows, Rails } from './backdrop';
-import { DEG, clamp, damp, dampArray, easeOutCubic } from './damp';
+import { DEG, clamp, damp, dampArray, easeOutCubic, smoothstep } from './damp';
 import { createGlassMaterial, createRoomEnvironment, useHighlightToneMapping } from './glass';
 import { LAMELLA_COUNT, LAMELLA_SPECS, createLamellaGeometries } from './lamellae';
 import { tokenColor, tokenHex } from './palette';
@@ -150,11 +150,15 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
   const target = createPose();
   const current = createPose();
   const display = createPose();
-  const lastRendered = new Float32Array(display.lam.length + display.group.length + 4);
+  const lastRendered = new Float32Array(display.lam.length + display.group.length + 8);
 
   let width = 1;
   let height = 1;
+  let cameraZBase = 1;
   let viewportH = window.innerHeight;
+  /** 1 on a single anchor; dips toward 0 while hero and about would otherwise slide into each other. */
+  let anchorPresence = 1;
+  let dominantAnchor: AnchorId | null = null;
   const coarse = matchMedia('(pointer: coarse)').matches;
 
   function applySize(): void {
@@ -173,8 +177,9 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     renderer.setSize(w, h, false);
     if (coarse) canvas.style.height = `${h}px`;
     camera.aspect = w / h;
-    camera.position.set(0, 0, (h * WPP) / 2 / Math.tan((FOV / 2) * DEG));
-    camera.far = camera.position.z * 4;
+    cameraZBase = (h * WPP) / 2 / Math.tan((FOV / 2) * DEG);
+    camera.position.set(0, 0, cameraZBase);
+    camera.far = cameraZBase * 4;
     camera.updateProjectionMatrix();
     sections.refresh();
     // A resized opaque canvas shows black until drawn; paint the page colour right away.
@@ -199,7 +204,6 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
   let lost = false;
   let tiltX = 0;
   let tiltY = 0;
-  let velocity = 0;
   let socialAmount = 0;
   let socialDirX = 0;
   let socialDirY = 0;
@@ -236,14 +240,55 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
 
   function blendTargets(): void {
     sections.update(state.section, viewportH);
+    const weights = {} as Record<AnchorId, number>;
     let total = 0;
-    for (const id of ANCHOR_IDS) total += sectionWeight(id);
+    for (const id of ANCHOR_IDS) {
+      weights[id] = sectionWeight(id);
+      total += weights[id];
+    }
     const fallback = total < 1e-4 ? ANCHOR_IDS.find((id) => frames[id].present) : undefined;
+    if (fallback) {
+      for (const id of ANCHOR_IDS) weights[id] = id === fallback ? 1 : 0;
+      total = 1;
+    }
+
+    // Hero→about must not lerp the optic across the viewport (that reads as a fly-over).
+    // Commit to one anchor and dip the scale at the swap so the handoff is a dissolve in place.
+    anchorPresence = 1;
+    let dominantNow: AnchorId | null = null;
+    if (!fallback && weights.hero > 0.02 && weights.about > 0.02) {
+      const share = weights.about / (weights.hero + weights.about);
+      const edge = Math.abs(share - 0.5) * 2;
+      anchorPresence = 0.08 + 0.92 * smoothstep(0, 0.78, edge);
+      if (share >= 0.5) {
+        weights.hero = 0;
+        dominantNow = 'about';
+      } else {
+        weights.about = 0;
+        dominantNow = 'hero';
+      }
+      total = 0;
+      for (const id of ANCHOR_IDS) total += weights[id];
+    } else if (!fallback) {
+      let best: AnchorId = 'hero';
+      let bestW = -1;
+      for (const id of ANCHOR_IDS) {
+        if (weights[id] > bestW) {
+          best = id;
+          bestW = weights[id];
+        }
+      }
+      dominantNow = bestW > 0 ? best : null;
+    } else {
+      dominantNow = fallback ?? null;
+    }
 
     frame.x = frame.y = frame.s = frame.hw = frame.hh = 0;
     clearPose(target);
+    if (total < 1e-4) return;
+
     for (const id of ANCHOR_IDS) {
-      const w = fallback ? (id === fallback ? 1 : 0) : sectionWeight(id) / total;
+      const w = weights[id] / total;
       if (w <= 0) continue;
       const f = frames[id];
       frame.x += f.x * w;
@@ -270,6 +315,15 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
       }
       addPose(target, scratch, w);
     }
+
+    const crossing =
+      dominantNow !== dominantAnchor &&
+      (dominantNow === 'hero' || dominantNow === 'about' || dominantAnchor === 'hero' || dominantAnchor === 'about');
+    if (crossing) {
+      current.lam.set(target.lam);
+      current.group.set(target.group);
+    }
+    dominantAnchor = dominantNow;
   }
 
   function updateSocialTarget(): void {
@@ -325,34 +379,27 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     if (!reduced) {
       const t = (now - startNow) / 1000;
       const storyW = clamp(state.story, 0, 1);
+      // Idle drift and scroll-velocity smear fight the scrub. Hold still while the chapter plays.
+      const idle = storyW < 0.035 && state.handoff < 0.04 ? 1 : 0;
       for (let i = 0; i < LAMELLA_COUNT; i++) {
         const o = i * STRIDE;
         const intro = easeOutCubic((t - 0.12 - i * 0.055) / 0.85);
-        if (intro < 1) {
+        if (intro < 1 && storyW < 0.02) {
           const k = 1 - intro;
           lam[o + 1] -= k * 1.6;
           lam[o + 2] += k * 0.22;
           lam[o + 5] += k * (i - 3) * 2.4 * DEG;
         }
-        const idle = 1 - storyW * 0.7;
         lam[o + 1] += Math.sin(t * 0.45 + i * 1.1) * 0.0022 * idle;
         lam[o + 2] += Math.sin(t * 0.55 + i * 0.7) * 0.004 * idle;
       }
-      g[G.rx] += Math.sin(t * 0.42) * 0.22 * DEG * (1 - storyW * 0.55);
+      g[G.rx] += Math.sin(t * 0.42) * 0.22 * DEG * idle;
 
-      tiltX = damp(tiltX, -state.pointer.y * 2.4 * DEG, 3.2, dt);
-      tiltY = damp(tiltY, state.pointer.x * 2.4 * DEG, 3.2, dt);
+      const tiltGain = storyW > 0.04 || state.handoff > 0.04 ? 0.22 : 1;
+      tiltX = damp(tiltX, -state.pointer.y * 2.4 * DEG * tiltGain, 3.2, dt);
+      tiltY = damp(tiltY, state.pointer.x * 2.4 * DEG * tiltGain, 3.2, dt);
       g[G.rx] += tiltX;
       g[G.ry] += tiltY;
-
-      velocity = damp(velocity, clamp(state.velocity / 45, -1, 1), 6, dt);
-      if (Math.abs(velocity) > 1e-4) {
-        for (let i = 0; i < LAMELLA_COUNT; i++) {
-          const o = i * STRIDE;
-          lam[o] *= 1 + 0.06 * Math.abs(velocity);
-          lam[o + 1] += (i - 3) * 0.035 * velocity;
-        }
-      }
 
       if (state.burst.t !== lastBurst) {
         lastBurst = state.burst.t;
@@ -386,10 +433,28 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
 
   function applyDisplay(rippleEnv: number): void {
     const g = display.group;
-    const s = frame.s * g[G.scale];
-    lens.position.set(frame.x + g[G.ox] * frame.s, frame.y + g[G.oy] * frame.s, 0);
+    const storyT = clamp(state.story, 0, 1);
+    const openCam = smoothstep(0.1, 0.4, storyT) * (1 - smoothstep(0.74, 0.96, storyT));
+    const settleCam = smoothstep(0.72, 1, storyT);
+    const release = clamp(state.handoff, 0, 1);
+    // Retreat in scale/z first so the glass stays crisp, then dissolve the last of it.
+    const retreat = smoothstep(0, 0.7, release);
+    const dissolve = smoothstep(0.4, 0.9, release);
+    const dolly = 1 - 0.07 * openCam + 0.1 * settleCam + 0.34 * retreat;
+    camera.position.z = cameraZBase * dolly;
+
+    const retreatScale = (1 - 0.9 * retreat) * anchorPresence;
+    const s = frame.s * g[G.scale] * Math.max(0.04, retreatScale);
+    // Lift away from the Work heading as it rises, and push back in z so the optic recedes.
+    lens.position.set(
+      frame.x + g[G.ox] * frame.s,
+      frame.y + g[G.oy] * frame.s + frame.s * 0.72 * retreat,
+      -frame.s * 1.85 * retreat,
+    );
     lens.rotation.set(g[G.rx], g[G.ry], g[G.rz]);
     lens.scale.setScalar(s);
+    const showOptic = dissolve < 0.97 && anchorPresence > 0.05 && retreatScale > 0.06;
+    lens.visible = showOptic;
     for (let i = 0; i < LAMELLA_COUNT; i++) {
       const o = i * STRIDE;
       const l = display.lam;
@@ -405,7 +470,7 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     const k = (camZ - zb) / camZ;
     bench.mesh.position.set(frame.x * k, frame.y * k, zb);
     bench.mesh.scale.setScalar(frame.s * k);
-    bench.strength = clamp(g[G.bench], 0, 1);
+    bench.strength = clamp(g[G.bench], 0, 1) * (showOptic ? 1 : 0);
 
     for (let i = 0; i < LAMELLA_COUNT; i++) {
       const spec = LAMELLA_SPECS[i];
@@ -424,7 +489,7 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
       shadow.position.set(px * t + 0.035 * gap * s, py * t - 0.06 * gap * s, zb);
       shadow.rotation.set(0, 0, g[G.rz] + l[o + 5]);
       shadow.scale.set(footprint * 1.7 * blur * s * t, spec.height * l[o + 7] * 1.3 * blur * s * t, 1);
-      shadow.material.uniforms.strength.value = (clamp(g[G.shadow], 0, 1) * 0.34) / (1 + 0.2 * gap);
+      shadow.material.uniforms.strength.value = showOptic ? (clamp(g[G.shadow], 0, 1) * 0.34) / (1 + 0.2 * gap) : 0;
     }
 
     // Soft pool under the optic, as if it stood just in front of the card.
@@ -432,9 +497,9 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     ground.position.set((lens.position.x + 0.12 * s) * groundT, (lens.position.y - 1.04 * s) * groundT, zb);
     ground.rotation.set(0, 0, g[G.rz] * 0.5);
     ground.scale.set(2.1 * s * groundT, 0.3 * s * groundT, 1);
-    ground.material.uniforms.strength.value = clamp(g[G.ground], 0, 1) * 0.6;
+    ground.material.uniforms.strength.value = showOptic ? clamp(g[G.ground], 0, 1) * 0.6 : 0;
 
-    const railStrength = clamp(g[G.rails], 0, 1);
+    const railStrength = showOptic ? clamp(g[G.rails], 0, 1) : 0;
     if (railStrength > 1e-3 || rails.meshes[0].visible) {
       const unit = frame.s * k;
       for (let side = 0; side < 2; side++) {
@@ -452,20 +517,19 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     glass.attenuationDistance = (THICKNESS * s) / TINT_DEPTH;
 
     if (!lite) glass.dispersion = BASE_DISPERSION + 2.2 * rippleEnv;
-    const fade = 1 - darkSmooth;
-    // Do not lower opacity on light sections — it milks out transmission.
-    // Only go transparent while dissolving into the dark chamber.
-    if (darkSmooth > 0.04) {
+    // Opacity only in the last part of the retreat. A long opacity fade milks transmission
+    // and leaves rods ghosted over the heading; scale/z do the actual handoff.
+    if (dissolve > 0.04) {
       glass.transparent = true;
-      glass.opacity = Math.max(0.2, fade);
-      glass.depthWrite = darkSmooth < 0.45;
+      glass.opacity = 1 - dissolve;
+      glass.depthWrite = dissolve < 0.4;
     } else {
       glass.transparent = false;
       glass.opacity = 1;
       glass.depthWrite = true;
     }
-    bench.strength = clamp(g[G.bench], 0, 1) * (0.55 + 0.35 * fade);
-    scene.environmentIntensity = 0.72 * (0.8 + 0.2 * fade);
+    bench.mesh.visible = showOptic && bench.strength > 0.02;
+    scene.environmentIntensity = 0.72 * (showOptic ? 1 : 0.85);
   }
 
   function changedSinceRender(): boolean {
@@ -481,6 +545,10 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     push(frame.y);
     push(frame.s);
     push(glass.dispersion);
+    push(glass.opacity);
+    push(state.handoff);
+    push(anchorPresence);
+    push(camera.position.z);
     return delta > 1e-5;
   }
 
@@ -496,10 +564,13 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     const dt = Math.min(0.05, Math.max(0, (now - lastNow) / 1000));
     lastNow = now;
     if (lost) return;
-    darkSmooth = state.reducedMotion ? state.dark : damp(darkSmooth, state.dark, 5.5, dt);
-    if (darkSmooth >= 0.995) {
+    darkSmooth = state.reducedMotion ? state.dark : damp(darkSmooth, state.dark, 6.5, dt);
+    if (darkSmooth >= 0.992 || state.handoff >= 0.995) {
+      if (!wasDark) {
+        renderer.setClearColor(background, 1);
+        renderer.clear();
+      }
       wasDark = true;
-      if (forceRender) renderer.clear();
       forceRender = false;
       return;
     }
@@ -515,7 +586,9 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
       current.group.set(target.group);
       hasPose = true;
     } else {
-      const rate = 6.2 + 4.5 * clamp(state.story, 0, 1);
+      // Tight tracking during the hero scrub so the pose stays locked to scroll, not chasing it.
+      const tracking = state.story > 0.01 && state.story < 0.995 && sectionWeight('hero') > 0.45;
+      const rate = tracking ? 22 : 8;
       dampArray(current.lam, target.lam, rate, dt);
       dampArray(current.group, target.group, rate, dt);
     }

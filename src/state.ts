@@ -10,10 +10,15 @@ export interface SceneState {
   /** Per-section progress: 0 when the section top meets the viewport bottom, 1 when its bottom meets the viewport top. */
   section: Record<SectionId, number>;
   /**
-   * Opening optical chapter (hero → about edge), scrub-linked 0..1.
-   * Drives explode / orbit / reassemble of the travelling S7 lens.
+   * Opening optical chapter, scrub-linked 0..1 while the hero is pinned.
+   * Assembled → depth/spacing reveal → settle. Not an orbit.
    */
   story: number;
+  /**
+   * Cream→void release, 0..1. Rises as Work approaches and stays high while
+   * the chamber covers the view, so the optic can leave before the heading.
+   */
+  handoff: number;
   /** Pointer in normalised device coordinates, -1..1, y up. */
   pointer: { x: number; y: number };
   /** Social channel that is hovered, focused, or expanded. */
@@ -32,6 +37,7 @@ export const state: SceneState = {
   velocity: 0,
   section: { hero: 0, about: 0, work: 0, lab: 0, contact: 0 },
   story: 0,
+  handoff: 0,
   pointer: { x: 0, y: 0 },
   activeSocial: null,
   burst: { social: null, x: 0, y: 0, t: -1e9 },

@@ -100,15 +100,17 @@ export function initReveals(): void {
               aria: 'auto',
             });
             splits.push(split);
+            const inWork = Boolean(heading.closest('#work'));
             gsap.from(split.chars, {
               yPercent: 112,
               autoAlpha: 0,
-              duration: 0.68,
-              stagger: 0.018,
+              duration: inWork ? 0.9 : 0.68,
+              stagger: inWork ? 0.022 : 0.018,
               ease: 'power3.out',
               scrollTrigger: {
                 trigger: heading,
-                start: 'top 84%',
+                // Work copy arrives after the optic has released, so it doesn't fight the rods.
+                start: inWork ? 'top 50%' : 'top 84%',
                 once: true,
               },
             });

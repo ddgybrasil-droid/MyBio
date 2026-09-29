@@ -62,53 +62,61 @@ function smooth(a: number, b: number, t: number): number {
 }
 
 /**
- * Opening chapter: optical focus-stack / barrel peel — not a cartoon explode-fly.
+ * Opening chapter, scrubbed 1:1 with `story` (no gimbal, no barrel peel):
+ * - 0.00–0.14 hold the assembled optic
+ * - 0.10–0.40 open spacing + optical-axis depth, then hold the stack
+ * - 0.18–0.70 a short glance (about 14°) so the depth reads — not an orbit
+ * - 0.74–1.00 settle back into a quiet resolved stack for About
  *
- * Like separating thin glass elements on a precision mount along the optical axis:
- * - 0.00–0.22 quiet assembled optic, slow intentional yaw
- * - 0.18–0.58 depth peel: lamellae space primarily in Z with micro lateral stagger
- * - 0.42–0.78 soft gimbal tilt (pitch/yaw) while peeled — studio examination, not orbit fly
- * - 0.72–1.00 settle toward the about handoff stance
+ * `heroPose(p, 0.7)` stays at peak separation for the specimen card.
  */
 export function heroPose(p: Pose, story: number): void {
   const t = clamp01(story);
-  const peel = smooth(0.18, 0.46, t) * (1 - smooth(0.72, 0.96, t));
-  const gimbal = smooth(0.38, 0.68, t) * (1 - smooth(0.78, 0.98, t));
-  const settle = smooth(0.72, 1, t);
-  const turn = smooth(0.02, 0.9, t);
+  const open = smooth(0.1, 0.38, t) * (1 - smooth(0.74, 0.94, t));
+  const glance = clamp01((t - 0.18) / 0.52);
+  const settle = smooth(0.74, 1, t);
 
   for (const s of LAMELLA_SPECS) {
     const i = s.index;
     const k = i - 3;
-    // Optical-axis spacing first; lateral is a whisper so edges catch light, not fly apart.
-    const pz = STAGGER_Z[i] * (1 + 0.35 * peel) - k * 0.22 * peel - k * 0.04 * gimbal;
-    const px = s.x * (1 + 0.08 * peel) + k * 0.018 * peel;
-    const py = s.y * (1 + 0.05 * peel) + Math.sin(i * 1.1) * 0.012 * peel;
-    const rx = (STAGGER_PITCH[i] * (1 - 0.35 * peel) + k * 1.1 * peel - 2.2 * gimbal) * DEG;
-    const ry = (STAGGER_YAW[i] * (1 - 0.25 * peel) + k * 2.4 * peel + 3.5 * gimbal * Math.sign(k || 1)) * DEG;
-    const rz = (STAGGER_ROLL[i] * (1 - 0.4 * peel) - k * 0.55 * peel) * DEG;
-    const sx = 1 + 0.012 * peel;
-    const sy = 1 + 0.02 * peel;
-    const sz = 1 + 0.06 * peel;
-    set(p, i, px, py, pz, rx, ry, rz, sx, sy, sz);
+    // Lateral spacing so each plate reads; depth along the optical axis, ordered.
+    // Rotations stay at the quiet stagger — slabs do not tumble or peel.
+    const px = s.x * (1 + 0.62 * open);
+    const py = s.y * (1 + 0.06 * open);
+    const pz = STAGGER_Z[i] * (1 - 0.65 * open) - k * (0.045 + 0.36 * open);
+    const rx = STAGGER_PITCH[i] * (1 - 0.55 * open) * DEG;
+    const ry = STAGGER_YAW[i] * (1 - 0.65 * open) * DEG;
+    const rz = STAGGER_ROLL[i] * (1 - 0.8 * open) * DEG;
+    const sz = 1 + 0.1 * open;
+    set(p, i, px, py, pz, rx, ry, rz, 1, 1, sz);
   }
 
-  const yaw = (-8 + 16 * turn - 6 * settle + 4 * gimbal) * DEG;
-  const pitch = (2.5 + 3.5 * peel + 4 * gimbal - 3.5 * settle) * DEG;
-  const roll = (-1.2 + 1.4 * peel * Math.sin(t * Math.PI) - 0.8 * settle) * DEG;
-  const scale = 1 + 0.035 * peel + 0.02 * gimbal - 0.025 * settle;
-  group(p, pitch, yaw, roll, 1, 1, 1, scale);
-  p.group[G.ox] = -0.025 * gimbal + 0.03 * settle;
-  p.group[G.oy] = 0.018 * peel - 0.022 * settle;
+  const yaw = (-4 + 14 * glance - 8 * settle) * DEG;
+  const pitch = (2.5 + 7 * open - 1.5 * settle) * DEG;
+  const scale = 1 + 0.025 * open - 0.035 * settle;
+  group(p, pitch, yaw, 0, 1, 1, 1, scale);
+  p.group[G.oy] = 0.03 * open;
 }
 
-/** Exploded along depth and sideways, each slab turned to show its edge. */
+/** Resolved stack — the same stance the hero settles into, held for the About column. */
 export function aboutPose(p: Pose): void {
+  heroPose(p, 1);
   for (const s of LAMELLA_SPECS) {
-    const k = s.index - 3;
-    set(p, s.index, s.x * 1.65, s.y * 1.5 + Math.sin(s.index * 1.7) * 0.07, -k * 0.3, k * 1.4 * DEG, (34 + k * 3.5) * DEG, -k * 1.2 * DEG);
+    const i = s.index;
+    const o = i * STRIDE;
+    p.lam[o] = s.x * 1.14;
+    p.lam[o + 1] = s.y;
+    p.lam[o + 2] = STAGGER_Z[i] - (i - 3) * 0.055;
+    p.lam[o + 3] = STAGGER_PITCH[i] * 0.45 * DEG;
+    p.lam[o + 4] = STAGGER_YAW[i] * 0.35 * DEG;
+    p.lam[o + 5] = 0;
+    p.lam[o + 8] = 1;
   }
-  group(p, 6 * DEG, -22 * DEG, 0, 1, 1, 0.8);
+  p.group[G.rx] = 2.5 * DEG;
+  p.group[G.ry] = 4 * DEG;
+  p.group[G.rz] = 0;
+  p.group[G.scale] = 0.96;
+  p.group[G.oy] = 0;
 }
 
 /**

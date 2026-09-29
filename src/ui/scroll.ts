@@ -35,9 +35,20 @@ function syncSceneState(): void {
   const work = document.getElementById('work');
   if (work) {
     const rect = work.getBoundingClientRect();
-    const entering = clamp((viewportHeight - rect.top) / viewportHeight);
+    const top = rect.top;
+    // Start while Work is still just below the fold; finish before the heading owns the frame.
+    const releaseStart = viewportHeight * 1.02;
+    const releaseEnd = viewportHeight * 0.5;
+    const enter = clamp((releaseStart - top) / Math.max(1, releaseStart - releaseEnd));
+    // Drop the release once Work has scrolled away, so lab/contact can have the optic again.
+    const stillCovering = clamp(rect.bottom / (viewportHeight * 0.42));
+    state.handoff = enter * stillCovering;
+    const entering = clamp((viewportHeight * 0.58 - top) / (viewportHeight * 0.36));
     const leaving = clamp(rect.bottom / viewportHeight);
     state.dark = Math.min(entering, leaving);
+  } else {
+    state.handoff = 0;
+    state.dark = 0;
   }
 }
 

@@ -36,7 +36,39 @@ export function initSpecimenChamber(): void {
       },
       (context) => {
         const desktop = Boolean(context.conditions?.desktop);
-        if (!desktop || state.reducedMotion) return;
+        if (state.reducedMotion) return;
+
+        if (!desktop) {
+          // Mobile keeps a scrolling stack. Each stage still opens like a focus pull out of the optic.
+          cards.forEach((card) => {
+            const stage = card.querySelector<HTMLElement>('.specimen__stage');
+            if (!stage) return;
+            gsap.fromTo(
+              stage,
+              { scale: 1.12, autoAlpha: 0.45, clipPath: 'circle(16% at 50% 46%)' },
+              {
+                scale: 1,
+                autoAlpha: 1,
+                clipPath: 'inset(0% 0% 0% 0%)',
+                ease: 'none',
+                scrollTrigger: {
+                  trigger: card,
+                  start: 'top 92%',
+                  end: 'top 58%',
+                  scrub: 0.7,
+                },
+              },
+            );
+          });
+          return () => {
+            gsap.set(cards, { clearProps: 'all' });
+            cards.forEach((card) => {
+              const stage = card.querySelector<HTMLElement>('.specimen__stage');
+              if (stage) gsap.set(stage, { clearProps: 'all' });
+            });
+            showCard(0);
+          };
+        }
 
         chamber.classList.add('is-pinned');
         gsap.set(cards.slice(1), { autoAlpha: 0 });
@@ -64,13 +96,13 @@ export function initSpecimenChamber(): void {
 
         // Opening bloom: first specimen focuses in from the optical centre.
         if (firstStage) {
-          timeline.fromTo(
+            timeline.fromTo(
             firstStage,
             {
-              scale: 1.18,
-              autoAlpha: 0.35,
-              filter: 'blur(10px)',
-              clipPath: 'circle(18% at 50% 48%)',
+              scale: 1.24,
+              autoAlpha: 0.2,
+              filter: 'blur(12px)',
+              clipPath: 'circle(12% at 50% 48%)',
             },
             {
               scale: 1,
