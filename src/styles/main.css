@@ -303,9 +303,9 @@ main,
   transform-origin: left center;
 }
 
-/* Hero — tall optical chapter (scrub runway for explode / orbit / handoff) */
+/* Hero — tall pinned chapter so the optic scrubs in place */
 .hero {
-  min-height: max(1080px, 178svh);
+  min-height: max(1080px, 210svh);
   overflow: clip;
   border-bottom: 1px solid var(--line);
 }
@@ -436,6 +436,7 @@ main,
   transition: opacity var(--duration-state) var(--ease-out);
 }
 
+.lens-data[data-phase="open"],
 .lens-data[data-phase="exploded"],
 .lens-data[data-phase="orbit"] {
   border-left-color: color-mix(in srgb, var(--focus) 55%, var(--line-strong));
@@ -554,7 +555,8 @@ main,
 
 .scroll-cue {
   position: absolute;
-  bottom: clamp(150px, 17vw, 270px);
+  top: calc(100svh - 148px);
+  bottom: auto;
   left: var(--gutter);
   display: flex;
   margin: 0;
@@ -628,14 +630,15 @@ html.js:not(.reduced-motion) .scroll-cue span {
   right: 0;
   bottom: -1px;
   left: 0;
-  height: min(28vh, 240px);
+  height: min(56vh, 520px);
   background: linear-gradient(
     180deg,
     transparent 0%,
-    color-mix(in srgb, var(--void) 18%, transparent) 48%,
-    color-mix(in srgb, var(--void) 72%, transparent) 100%
+    color-mix(in srgb, var(--void) 22%, transparent) 42%,
+    color-mix(in srgb, var(--void) 78%, transparent) 100%
   );
   content: "";
+  opacity: var(--chamber-veil);
   pointer-events: none;
 }
 
@@ -725,7 +728,6 @@ html.js:not(.reduced-motion) .scroll-cue span {
 
 /* Work chamber */
 .work {
-  --chamber-veil: 0;
   position: relative;
   z-index: 3;
   min-height: 100svh;
@@ -733,8 +735,8 @@ html.js:not(.reduced-motion) .scroll-cue span {
   background: var(--void);
   color: var(--void-ink);
   box-shadow:
-    inset 0 160px 140px -90px color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 70%), transparent),
-    inset 0 48px 64px -24px color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 28%), transparent);
+    inset 0 220px 180px -80px color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 78%), transparent),
+    inset 0 72px 90px -28px color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 36%), transparent);
 }
 
 .work::before {
@@ -743,12 +745,13 @@ html.js:not(.reduced-motion) .scroll-cue span {
   top: 0;
   right: 0;
   left: 0;
-  height: min(42vh, 380px);
+  height: min(78vh, 720px);
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 88%), transparent) 0%,
-    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 42%), transparent) 38%,
-    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 8%), transparent) 72%,
+    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 94%), transparent) 0%,
+    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 62%), transparent) 30%,
+    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 26%), transparent) 62%,
+    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 6%), transparent) 84%,
     transparent 100%
   );
   content: "";
@@ -1646,15 +1649,15 @@ html.js:not(.reduced-motion) [data-capability] {
   }
 
   .hero {
-    min-height: max(900px, 132svh);
+    min-height: max(980px, 220svh);
   }
 
   .hero__grid {
-    position: relative;
-    top: auto;
-    z-index: auto;
-    min-height: max(760px, 110svh);
-    isolation: auto;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    min-height: 100svh;
+    isolation: isolate;
   }
 
   .hero__copy {
@@ -1781,18 +1784,18 @@ html.js:not(.reduced-motion) [data-capability] {
   }
 
   .hero {
-    min-height: max(760px, 118svh);
+    min-height: max(860px, 220svh);
   }
 
   .hero__grid {
-    position: relative;
-    top: auto;
-    z-index: auto;
-    min-height: 90svh;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    min-height: 100svh;
     padding-top: 135px;
-    padding-bottom: 180px;
+    padding-bottom: 120px;
     align-content: center;
-    isolation: auto;
+    isolation: isolate;
   }
 
   .hero__copy {
@@ -1837,7 +1840,8 @@ html.js:not(.reduced-motion) [data-capability] {
   }
 
   .scroll-cue {
-    bottom: 128px;
+    top: calc(100svh - 112px);
+    bottom: auto;
   }
 
   .hero__wordmark {

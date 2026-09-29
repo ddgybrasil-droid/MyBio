@@ -62,53 +62,42 @@ function smooth(a: number, b: number, t: number): number {
 }
 
 /**
- * Opening chapter: optical focus-stack / barrel peel — not a cartoon explode-fly.
+ * Pinned hero chapter, scrubbed from `story` (no barrel peel, no fly-by):
+ * - 0.00–0.10 assembled hold
+ * - 0.08–0.42 equidistant Y separation, linear with scroll (equal gaps)
+ * - 0.42–0.78 hold the separated stack; a few degrees of yaw only so refraction reads
+ * - 0.78–1.00 compress back to the assembled stack for the Work match-cut
  *
- * Like separating thin glass elements on a precision mount along the optical axis:
- * - 0.00–0.22 quiet assembled optic, slow intentional yaw
- * - 0.18–0.58 depth peel: lamellae space primarily in Z with micro lateral stagger
- * - 0.42–0.78 soft gimbal tilt (pitch/yaw) while peeled — studio examination, not orbit fly
- * - 0.72–1.00 settle toward the about handoff stance
+ * `heroPose(p, 0.7)` is still fully separated for the specimen card.
  */
 export function heroPose(p: Pose, story: number): void {
   const t = clamp01(story);
-  const peel = smooth(0.18, 0.46, t) * (1 - smooth(0.72, 0.96, t));
-  const gimbal = smooth(0.38, 0.68, t) * (1 - smooth(0.78, 0.98, t));
-  const settle = smooth(0.72, 1, t);
-  const turn = smooth(0.02, 0.9, t);
+  const rise = clamp01((t - 0.08) / 0.34);
+  const gap = rise * (1 - smooth(0.78, 0.96, t));
+  // Equal step between neighbours. Y is the separation axis so the slabs stay face-on.
+  const step = 0.4;
 
   for (const s of LAMELLA_SPECS) {
     const i = s.index;
     const k = i - 3;
-    // Optical-axis spacing first; lateral is a whisper so edges catch light, not fly apart.
-    const pz = STAGGER_Z[i] * (1 + 0.35 * peel) - k * 0.22 * peel - k * 0.04 * gimbal;
-    const px = s.x * (1 + 0.08 * peel) + k * 0.018 * peel;
-    const py = s.y * (1 + 0.05 * peel) + Math.sin(i * 1.1) * 0.012 * peel;
-    const rx = (STAGGER_PITCH[i] * (1 - 0.35 * peel) + k * 1.1 * peel - 2.2 * gimbal) * DEG;
-    const ry = (STAGGER_YAW[i] * (1 - 0.25 * peel) + k * 2.4 * peel + 3.5 * gimbal * Math.sign(k || 1)) * DEG;
-    const rz = (STAGGER_ROLL[i] * (1 - 0.4 * peel) - k * 0.55 * peel) * DEG;
-    const sx = 1 + 0.012 * peel;
-    const sy = 1 + 0.02 * peel;
-    const sz = 1 + 0.06 * peel;
-    set(p, i, px, py, pz, rx, ry, rz, sx, sy, sz);
+    const px = s.x;
+    const py = s.y + k * step * gap;
+    const pz = STAGGER_Z[i] * (1 - 0.8 * gap) - k * 0.055 * gap;
+    const rx = STAGGER_PITCH[i] * (1 - 0.9 * gap) * DEG;
+    const ry = STAGGER_YAW[i] * (1 - 0.9 * gap) * DEG;
+    const rz = STAGGER_ROLL[i] * (1 - gap) * DEG;
+    set(p, i, px, py, pz, rx, ry, rz, 1, 1, 1);
   }
 
-  const yaw = (-8 + 16 * turn - 6 * settle + 4 * gimbal) * DEG;
-  const pitch = (2.5 + 3.5 * peel + 4 * gimbal - 3.5 * settle) * DEG;
-  const roll = (-1.2 + 1.4 * peel * Math.sin(t * Math.PI) - 0.8 * settle) * DEG;
-  const scale = 1 + 0.035 * peel + 0.02 * gimbal - 0.025 * settle;
-  group(p, pitch, yaw, roll, 1, 1, 1, scale);
-  p.group[G.ox] = -0.025 * gimbal + 0.03 * settle;
-  p.group[G.oy] = 0.018 * peel - 0.022 * settle;
+  // Camera is secondary: a short yaw/pitch while the gaps are open, then back to rest.
+  const yaw = 9 * gap * DEG;
+  const pitch = (2.2 + 4.5 * gap) * DEG;
+  group(p, pitch, yaw, 0, 1 - 0.35 * smooth(0.82, 1, t), 1, 1, 1 - 0.08 * gap);
 }
 
-/** Exploded along depth and sideways, each slab turned to show its edge. */
+/** Settled stack — where the hero compresses before it docks into Work. */
 export function aboutPose(p: Pose): void {
-  for (const s of LAMELLA_SPECS) {
-    const k = s.index - 3;
-    set(p, s.index, s.x * 1.65, s.y * 1.5 + Math.sin(s.index * 1.7) * 0.07, -k * 0.3, k * 1.4 * DEG, (34 + k * 3.5) * DEG, -k * 1.2 * DEG);
-  }
-  group(p, 6 * DEG, -22 * DEG, 0, 1, 1, 0.8);
+  heroPose(p, 1);
 }
 
 /**

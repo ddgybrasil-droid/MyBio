@@ -5,10 +5,9 @@ import { state } from '../state';
 gsap.registerPlugin(ScrollTrigger);
 
 const PHASE_LABELS = [
-  { until: 0.22, status: 'State / assembled', rotation: 'Yaw / quiet', planes: 'Focus stack / 07' },
-  { until: 0.52, status: 'State / peel', rotation: 'Barrel spacing', planes: 'Depth peel / active' },
-  { until: 0.78, status: 'State / gimbal', rotation: 'Soft tilt', planes: 'Examination / mid' },
-  { until: 1.01, status: 'State / settle', rotation: 'Handoff / about', planes: 'Specimen path / open' },
+  { until: 0.12, status: 'State / assembled', rotation: 'Hold / quiet', planes: 'Focus stack / 07' },
+  { until: 0.78, status: 'State / separate', rotation: 'Gap / equal', planes: 'Seven planes / open' },
+  { until: 1.01, status: 'State / settle', rotation: 'Compressed', planes: 'Match / work' },
 ] as const;
 
 function phaseFor(progress: number): (typeof PHASE_LABELS)[number] {
@@ -32,9 +31,9 @@ function setLensData(progress: number): void {
 }
 
 /**
- * Scrub-linked opening chapter: Lenis + ScrollTrigger drive `state.story`,
- * which the Three.js lens reads every frame (All Star Burgers–style scrub,
- * optical-glass themed). Specimens inherit continuity via the dark chamber pin.
+ * Scrub-linked opening chapter. Scroll progress drives the optic 1:1
+ * (assembled → depth/spacing reveal → settle) for the pinned hero.
+ * A separate veil releases the cream field into the Work chamber.
  */
 export function initScrollytelling(): void {
   let media: gsap.MatchMedia | null = null;
@@ -45,7 +44,6 @@ export function initScrollytelling(): void {
     setLensData(0);
 
     const hero = document.getElementById('hero');
-    const about = document.getElementById('about');
     const work = document.getElementById('work');
     if (!hero) return;
 
@@ -69,24 +67,23 @@ export function initScrollytelling(): void {
         if (reduced) {
           state.story = 0;
           setLensData(0);
+          document.documentElement.style.setProperty('--chamber-veil', '0');
+          work?.style.removeProperty('--chamber-veil');
           gsap.set([heroCopy, scrollCue, lensField, heroSocials, wordmark].flat().filter(Boolean), {
             clearProps: 'all',
           });
           return;
         }
 
-        const storyProxy = { value: 0 };
-
-        // Primary scrub: hero top → about mid. Tall hero gives runway like a burger pin chapter.
+        // Heavy scrub lag: the pose is a function of progress, the follow is liquid.
+        const storyScrub = desktop ? 1.05 : 0.85;
         ScrollTrigger.create({
           trigger: hero,
           start: 'top top',
-          endTrigger: about ?? hero,
-          end: about ? 'center center' : 'bottom top',
-          scrub: desktop ? 0.9 : 0.65,
+          end: 'bottom bottom',
+          scrub: storyScrub,
           invalidateOnRefresh: true,
           onUpdate: (self) => {
-            storyProxy.value = self.progress;
             state.story = self.progress;
             setLensData(self.progress);
           },
@@ -97,9 +94,8 @@ export function initScrollytelling(): void {
           scrollTrigger: {
             trigger: hero,
             start: 'top top',
-            endTrigger: about ?? hero,
-            end: about ? 'center center' : 'bottom top',
-            scrub: desktop ? 0.9 : 0.65,
+            end: 'bottom bottom',
+            scrub: storyScrub,
             invalidateOnRefresh: true,
           },
         });
@@ -108,8 +104,8 @@ export function initScrollytelling(): void {
           chapter.fromTo(
             heroCopy,
             { yPercent: 0, autoAlpha: 1 },
-            { yPercent: desktop ? 18 : 8, autoAlpha: 0.12, duration: 1 },
-            0,
+            { yPercent: desktop ? 10 : 6, autoAlpha: 0, duration: 0.28 },
+            0.04,
           );
         }
 
@@ -117,64 +113,27 @@ export function initScrollytelling(): void {
           chapter.fromTo(
             heroTitle,
             { fontVariationSettings: '"wght" 515' },
-            { fontVariationSettings: '"wght" 420', duration: 1 },
-            0,
+            { fontVariationSettings: '"wght" 470', duration: 0.28 },
+            0.04,
           );
-        }
-
-        if (wordmark.length) {
-          chapter.fromTo(
-            wordmark,
-            {
-              x: 0,
-              yPercent: 0,
-              autoAlpha: 1,
-            },
-            {
-              x: (index: number) => (index - (wordmark.length - 1) / 2) * (desktop ? 18 : 8),
-              yPercent: (index: number) => Math.abs(index - (wordmark.length - 1) / 2) * 4 + 48,
-              autoAlpha: 0.35,
-              duration: 1,
-            },
-            0,
-          );
-        }
-
-        if (scrollCue) {
-          chapter.fromTo(
-            scrollCue,
-            { autoAlpha: 1, x: 0 },
-            { autoAlpha: 0, x: -24, duration: 0.35 },
-            0,
-          );
-        }
-
-        if (lensField && desktop) {
-          chapter.fromTo(
-            lensField,
-            { scale: 1, xPercent: 0 },
-            { scale: 1.03, xPercent: -2, duration: 0.6 },
-            0.1,
-          );
-          chapter.to(lensField, { scale: 0.98, xPercent: -5, duration: 0.4 }, 0.6);
         }
 
         if (heroSocials) {
-          chapter.fromTo(heroSocials, { autoAlpha: 1, y: 0 }, { autoAlpha: 0.2, y: -28, duration: 0.55 }, 0.2);
+          chapter.fromTo(heroSocials, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -20, duration: 0.32 }, 0.08);
         }
 
-        // Bridge into the dark specimen chamber: longer soft veil, heading blooms late.
-        if (work && desktop) {
-          const heading = work.querySelector<HTMLElement>('.work__heading');
+        // Long cream→void melt on every breakpoint. The optic's own retreat is driven by state.handoff.
+        if (work) {
+          const eyebrow = work.querySelector<HTMLElement>('.work__heading .eyebrow');
           const counter = work.querySelector<HTMLElement>('.specimen-counter');
           const veilProxy = { v: 0 };
           gsap
             .timeline({
               scrollTrigger: {
                 trigger: work,
-                start: 'top 98%',
-                end: 'top 8%',
-                scrub: 1.05,
+                start: 'top 118%',
+                end: 'top 10%',
+                scrub: desktop ? 1.25 : 0.9,
                 invalidateOnRefresh: true,
               },
             })
@@ -185,29 +144,27 @@ export function initScrollytelling(): void {
                 duration: 1,
                 ease: 'none',
                 onUpdate: () => {
-                  // Ease the CSS custom property for a cream→void handoff that feels continuous.
                   const t = veilProxy.v;
                   const eased = t * t * (3 - 2 * t);
-                  work.style.setProperty('--chamber-veil', String(eased));
+                  document.documentElement.style.setProperty('--chamber-veil', String(eased));
                 },
               },
               0,
             );
 
-          if (heading) {
+          if (eyebrow) {
             gsap.fromTo(
-              heading,
-              { autoAlpha: 0, y: 28, filter: 'blur(6px)' },
+              eyebrow,
+              { autoAlpha: 0, y: 16 },
               {
                 autoAlpha: 1,
                 y: 0,
-                filter: 'blur(0px)',
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 82%',
-                  end: 'top 28%',
-                  scrub: 0.95,
+                  start: 'top 58%',
+                  end: 'top 36%',
+                  scrub: 0.7,
                 },
               },
             );
@@ -223,9 +180,9 @@ export function initScrollytelling(): void {
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 68%',
-                  end: 'top 30%',
-                  scrub: 0.85,
+                  start: 'top 52%',
+                  end: 'top 34%',
+                  scrub: 0.7,
                 },
               },
             );
@@ -235,6 +192,7 @@ export function initScrollytelling(): void {
         return () => {
           state.story = 0;
           setLensData(0);
+          document.documentElement.style.setProperty('--chamber-veil', '0');
         };
       },
     );
