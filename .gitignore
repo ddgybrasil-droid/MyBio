@@ -3,3 +3,5 @@ dist/
 .superdesign/tmp/
 *.log
 .DS_Store
+
+qa-sticky/
