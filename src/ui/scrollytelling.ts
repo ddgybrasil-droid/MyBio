@@ -31,9 +31,9 @@ function setLensData(progress: number): void {
 }
 
 /**
- * Scrub-linked opening chapter. Scroll progress drives the optic 1:1
- * (assembled → depth/spacing reveal → settle) for the pinned hero.
- * A separate veil releases the cream field into the Work chamber.
+ * Real All-Star-style pinned scrub: GSAP pin:true holds the hero stage in the
+ * viewport while scroll progress drives the optic timeline 1:1. Pin spacing is
+ * the runway — do not fake this with CSS sticky + a tall section.
  */
 export function initScrollytelling(): void {
   let media: gsap.MatchMedia | null = null;
@@ -46,6 +46,9 @@ export function initScrollytelling(): void {
     const hero = document.getElementById('hero');
     const work = document.getElementById('work');
     if (!hero) return;
+
+    hero.classList.remove('is-pinned');
+    const pinTarget = hero.querySelector<HTMLElement>('.hero__pin') ?? hero;
 
     media = gsap.matchMedia();
     media.add(
@@ -75,28 +78,28 @@ export function initScrollytelling(): void {
           return;
         }
 
+        hero.classList.add('is-pinned');
+
         // Heavy scrub lag: the pose is a function of progress, the follow is liquid.
         const storyScrub = desktop ? 1.05 : 0.85;
-        ScrollTrigger.create({
-          trigger: hero,
-          start: 'top top',
-          end: 'bottom bottom',
-          scrub: storyScrub,
-          invalidateOnRefresh: true,
-          onUpdate: (self) => {
-            state.story = self.progress;
-            setLensData(self.progress);
-          },
-        });
+        // ~2.1–2.25 vh of pinned runway — matches the old tall-hero feel without sticky.
+        const scrubRunway = (): number => Math.round(window.innerHeight * (desktop ? 2.15 : 2.25));
 
         const chapter = gsap.timeline({
           defaults: { ease: 'none' },
           scrollTrigger: {
-            trigger: hero,
+            trigger: pinTarget,
             start: 'top top',
-            end: 'bottom bottom',
+            end: () => `+=${scrubRunway()}`,
+            pin: true,
+            pinSpacing: true,
             scrub: storyScrub,
+            anticipatePin: 1,
             invalidateOnRefresh: true,
+            onUpdate: (self) => {
+              state.story = self.progress;
+              setLensData(self.progress);
+            },
           },
         });
 
@@ -120,6 +123,19 @@ export function initScrollytelling(): void {
 
         if (heroSocials) {
           chapter.fromTo(heroSocials, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -20, duration: 0.32 }, 0.08);
+        }
+
+        if (scrollCue) {
+          chapter.fromTo(scrollCue, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.18 }, 0.02);
+        }
+
+        if (wordmark.length) {
+          chapter.fromTo(
+            wordmark,
+            { yPercent: 0, autoAlpha: 0.55 },
+            { yPercent: desktop ? 18 : 12, autoAlpha: 0, duration: 0.4, stagger: 0.012 },
+            0.12,
+          );
         }
 
         // Long cream→void melt on every breakpoint. The optic's own retreat is driven by state.handoff.
@@ -190,6 +206,7 @@ export function initScrollytelling(): void {
         }
 
         return () => {
+          hero.classList.remove('is-pinned');
           state.story = 0;
           setLensData(0);
           document.documentElement.style.setProperty('--chamber-veil', '0');

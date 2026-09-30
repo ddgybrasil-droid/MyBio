@@ -303,22 +303,26 @@ main,
   transform-origin: left center;
 }
 
-/* Hero — tall pinned chapter so the optic scrubs in place */
+/* Hero — GSAP pin:true on .hero__pin; pinSpacing is the scrub runway */
 .hero {
-  min-height: max(1080px, 210svh);
-  overflow: clip;
+  position: relative;
   border-bottom: 1px solid var(--line);
 }
 
-.hero__grid {
-  position: sticky;
-  top: 0;
+.hero__pin {
+  position: relative;
   z-index: 2;
-  min-height: max(820px, 100svh);
+  min-height: 100svh;
+  isolation: isolate;
+}
+
+.hero__grid {
+  position: relative;
+  z-index: 2;
+  min-height: 100svh;
   align-content: end;
   padding-top: calc(var(--rail-height) + var(--space-8));
   padding-bottom: clamp(180px, 18vw, 300px);
-  isolation: isolate;
 }
 
 .hero__copy {
@@ -1649,15 +1653,17 @@ html.js:not(.reduced-motion) [data-capability] {
   }
 
   .hero {
-    min-height: max(980px, 220svh);
+    min-height: 0;
+  }
+
+  .hero__pin {
+    min-height: 100svh;
   }
 
   .hero__grid {
-    position: sticky;
-    top: 0;
+    position: relative;
     z-index: 2;
     min-height: 100svh;
-    isolation: isolate;
   }
 
   .hero__copy {
@@ -1784,18 +1790,20 @@ html.js:not(.reduced-motion) [data-capability] {
   }
 
   .hero {
-    min-height: max(860px, 220svh);
+    min-height: 0;
+  }
+
+  .hero__pin {
+    min-height: 100svh;
   }
 
   .hero__grid {
-    position: sticky;
-    top: 0;
+    position: relative;
     z-index: 2;
     min-height: 100svh;
     padding-top: 135px;
     padding-bottom: 120px;
     align-content: center;
-    isolation: isolate;
   }
 
   .hero__copy {

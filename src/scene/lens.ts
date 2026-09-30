@@ -346,6 +346,9 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
   function inChapter(): boolean {
     if (state.reducedMotion) return false;
     if (sectionWeight('lab') >= 0.25 || sectionWeight('contact') >= 0.2) return false;
+    // While the pinned hero scrub is driving story, keep the optic locked centre-stage
+    // even if section weights flicker during pin/unpin transitions.
+    if (state.story > 0.001 && state.story < 0.999) return true;
     if (sectionWeight('hero') > 0.02 || sectionWeight('about') > 0.02) return true;
     return state.handoff > 0.02 && state.handoff < 0.98;
   }
