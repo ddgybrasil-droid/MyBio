@@ -339,8 +339,8 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
   /** Gap window shared with heroPose: snappy open, long hold, compress. */
   function separationAmount(story: number): number {
     const t = clamp(story, 0, 1);
-    const rise = clamp((t - 0.06) / 0.26, 0, 1);
-    return rise * (1 - smoothstep(0.78, 0.97, t));
+    const rise = clamp((t - 0.04) / 0.22, 0, 1);
+    return rise * (1 - smoothstep(0.84, 0.99, t));
   }
 
   function inChapter(): boolean {
@@ -362,8 +362,8 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     if (!work) return 0;
     const top = work.getBoundingClientRect().top;
     // Start earlier so dock/dissolve overlaps the cream→void melt.
-    const start = height * 1.45;
-    const end = height * 0.28;
+    const start = height * 1.6;
+    const end = height * 0.22;
     return clamp((start - top) / Math.max(1, start - end), 0, 1);
   }
 
@@ -390,21 +390,21 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     const specimen = document.querySelector('[data-specimen="lens"]');
     const work = document.getElementById('work');
     const workTop = work ? work.getBoundingClientRect().top : height;
-    if (specimen && exitT > 0.38) {
+    if (specimen && exitT > 0.28) {
       const r = specimen.getBoundingClientRect();
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
       const inFrame =
         r.width > 32 &&
         r.height > 32 &&
-        cy > height * 0.22 &&
-        cy < height * 0.94 &&
-        r.top > workTop - height * 0.08;
+        cy > height * 0.18 &&
+        cy < height * 0.96 &&
+        r.top > workTop - height * 0.1;
       if (inFrame) {
-        const commit = smoothstep(0.38, 0.9, exitT);
+        const commit = smoothstep(0.28, 0.86, exitT);
         dockX = (cx - width / 2) * WPP * commit;
         dockY = stageY + (-(cy - height / 2) * WPP - stageY) * commit;
-        dockS = stageS + (Math.min(r.width, r.height) * 0.22 * WPP - stageS) * commit;
+        dockS = stageS + (Math.min(r.width, r.height) * 0.24 * WPP - stageS) * commit;
       }
     }
 
@@ -547,10 +547,10 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     const dolly = 1 - 0.06 * separationAmount(storyT);
     camera.position.z = cameraZBase * dolly;
 
-    // Hold optic through melt; dissolve as iris claims the centre (no empty dark beat).
-    let dissolve = chapter ? smoothstep(0.52, 0.94, Math.max(exitT, state.handoff * 0.9)) : 0;
-    if (!chapter && state.handoff > 0.55) dissolve = 1;
-    if (headingOwnsFrame() && exitT > 0.62) dissolve = Math.max(dissolve, smoothstep(0.62, 0.9, exitT));
+    // Hold optic through melt; dissolve only as iris claims the centre (no empty dark beat).
+    let dissolve = chapter ? smoothstep(0.58, 0.96, Math.max(exitT, state.handoff * 0.85)) : 0;
+    if (!chapter && state.handoff > 0.6) dissolve = 1;
+    if (headingOwnsFrame() && exitT > 0.68) dissolve = Math.max(dissolve, smoothstep(0.68, 0.92, exitT));
     opticDissolve = dissolve;
 
     const presence = chapter ? 1 : anchorPresence;
@@ -625,8 +625,8 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     if (!lite) glass.dispersion = BASE_DISPERSION + 2.2 * rippleEnv;
     // Opacity only at the tail of the exit. A long fade milks transmission and ghosts rods
     // over the heading; the dock scale does the handoff, then the mesh hard-hides.
-    if (dissolve > 0.55) {
-      const fade = smoothstep(0.55, 0.94, dissolve);
+    if (dissolve > 0.6) {
+      const fade = smoothstep(0.6, 0.96, dissolve);
       glass.transparent = true;
       glass.opacity = 1 - fade;
       glass.depthWrite = fade < 0.3;
@@ -698,9 +698,9 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
       current.group.set(target.group);
       hasPose = true;
     } else {
-      // Heavy liquid follow while the hero scrub is the timeline. The dock position is not damped.
+      // Near-snap pose follow while scrubbing — floaty damp was the lag vs All-Star lock.
       const tracking = chapter && state.story > 0.02 && state.story < 0.98 && sectionWeight('hero') > 0.35;
-      const rate = tracking ? 5.6 : 9;
+      const rate = tracking ? 22 : 14;
       dampArray(current.lam, target.lam, rate, dt);
       dampArray(current.group, target.group, rate, dt);
     }
