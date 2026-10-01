@@ -37,8 +37,8 @@ function syncSceneState(): void {
     const rect = work.getBoundingClientRect();
     const top = rect.top;
     // Start early so the optic can match-cut while cream still melts into the chamber.
-    const releaseStart = viewportHeight * 1.65;
-    const releaseEnd = viewportHeight * 0.26;
+    const releaseStart = viewportHeight * 1.78;
+    const releaseEnd = viewportHeight * 0.2;
     const enter = clamp((releaseStart - top) / Math.max(1, releaseStart - releaseEnd));
     // Drop the release once Work has scrolled away, so lab/contact can have the optic again.
     const stillCovering = clamp(rect.bottom / (viewportHeight * 0.42));
@@ -56,13 +56,13 @@ function createLenis(): void {
   const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
   if (!finePointer || state.reducedMotion || lenis) return;
 
-  // Higher lerp = less floaty lag vs ScrollTrigger pin scrub (All-Star lock).
+  // Near-instant Lenis — residual lag was still readable vs All-Star lock.
   lenis = new Lenis({
     smoothWheel: true,
     syncTouch: false,
     touchMultiplier: 1,
-    wheelMultiplier: 0.92,
-    lerp: 0.16,
+    wheelMultiplier: 1,
+    lerp: 0.28,
   });
   lenis.on('scroll', ScrollTrigger.update);
 }
