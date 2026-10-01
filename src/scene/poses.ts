@@ -62,37 +62,38 @@ function smooth(a: number, b: number, t: number): number {
 }
 
 /**
- * Pinned hero chapter, scrubbed from `story` (no barrel peel, no fly-by):
- * - 0.00–0.10 assembled hold
- * - 0.08–0.42 equidistant Y separation, linear with scroll (equal gaps)
- * - 0.42–0.78 hold the separated stack; a few degrees of yaw only so refraction reads
- * - 0.78–1.00 compress back to the assembled stack for the Work match-cut
+ * Pinned hero chapter, scrubbed from `story` (All-Star THE STACK timing):
+ * - 0.00–0.08 assembled hold
+ * - 0.06–0.32 equidistant Y separation (snappy open, equal gaps)
+ * - 0.32–0.78 hold the open stack — the labeled "burger layers" beat
+ * - 0.78–1.00 compress for the Work match-cut
  *
- * `heroPose(p, 0.7)` is still fully separated for the specimen card.
+ * Face-on slabs only (no cube tumble). `heroPose(p, 0.7)` stays fully separated.
  */
 export function heroPose(p: Pose, story: number): void {
   const t = clamp01(story);
-  const rise = clamp01((t - 0.08) / 0.34);
-  const gap = rise * (1 - smooth(0.78, 0.96, t));
-  // Equal step between neighbours. Y is the separation axis so the slabs stay face-on.
-  const step = 0.4;
+  // Faster rise so more of the runway is spent holding the open stack.
+  const rise = clamp01((t - 0.06) / 0.26);
+  const gap = rise * (1 - smooth(0.78, 0.97, t));
+  // Equal step between neighbours. Slightly wider for clearer layer reading.
+  const step = 0.46;
 
   for (const s of LAMELLA_SPECS) {
     const i = s.index;
     const k = i - 3;
     const px = s.x;
     const py = s.y + k * step * gap;
-    const pz = STAGGER_Z[i] * (1 - 0.8 * gap) - k * 0.055 * gap;
-    const rx = STAGGER_PITCH[i] * (1 - 0.9 * gap) * DEG;
-    const ry = STAGGER_YAW[i] * (1 - 0.9 * gap) * DEG;
+    const pz = STAGGER_Z[i] * (1 - 0.85 * gap) - k * 0.04 * gap;
+    const rx = STAGGER_PITCH[i] * (1 - 0.92 * gap) * DEG;
+    const ry = STAGGER_YAW[i] * (1 - 0.92 * gap) * DEG;
     const rz = STAGGER_ROLL[i] * (1 - gap) * DEG;
     set(p, i, px, py, pz, rx, ry, rz, 1, 1, 1);
   }
 
-  // Camera is secondary: a short yaw/pitch while the gaps are open, then back to rest.
-  const yaw = 9 * gap * DEG;
-  const pitch = (2.2 + 4.5 * gap) * DEG;
-  group(p, pitch, yaw, 0, 1 - 0.35 * smooth(0.82, 1, t), 1, 1, 1 - 0.08 * gap);
+  // Soft gimbal only while open — enough to catch refraction, not a tumble.
+  const yaw = 7.5 * gap * DEG;
+  const pitch = (1.8 + 3.8 * gap) * DEG;
+  group(p, pitch, yaw, 0, 1 - 0.4 * smooth(0.82, 1, t), 1, 1, 1 - 0.06 * gap);
 }
 
 /** Settled stack — where the hero compresses before it docks into Work. */

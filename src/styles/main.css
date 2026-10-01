@@ -623,8 +623,8 @@ html.js:not(.reduced-motion) .scroll-cue span {
 .about {
   position: relative;
   z-index: 2;
-  min-height: 96svh;
-  padding-block: calc(var(--section-gap) * 0.85);
+  min-height: 78svh;
+  padding-block: calc(var(--section-gap) * 0.62);
   border-bottom: 0;
 }
 
@@ -634,13 +634,14 @@ html.js:not(.reduced-motion) .scroll-cue span {
   right: 0;
   bottom: -1px;
   left: 0;
-  height: min(72vh, 640px);
+  height: min(88vh, 780px);
   background: linear-gradient(
     180deg,
     transparent 0%,
-    color-mix(in srgb, var(--void) 18%, transparent) 28%,
-    color-mix(in srgb, var(--void) 55%, transparent) 62%,
-    color-mix(in srgb, var(--void) 88%, transparent) 100%
+    color-mix(in srgb, var(--void) 12%, transparent) 22%,
+    color-mix(in srgb, var(--void) 48%, transparent) 55%,
+    color-mix(in srgb, var(--void) 82%, transparent) 82%,
+    color-mix(in srgb, var(--void) 96%, transparent) 100%
   );
   content: "";
   opacity: var(--chamber-veil);
@@ -666,15 +667,16 @@ html.js:not(.reduced-motion) .scroll-cue span {
   position: relative;
   z-index: 2;
   display: grid;
-  margin-top: clamp(72px, 10vw, 140px);
+  margin-top: clamp(56px, 8vw, 110px);
   grid-column: 1 / span 7;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   border-block: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface-solid) 55%, transparent);
 }
 
 .capability {
   position: relative;
-  min-height: 230px;
+  min-height: 200px;
   padding: var(--space-3);
 }
 
@@ -713,8 +715,8 @@ html.js:not(.reduced-motion) .scroll-cue span {
 
 .about__lens {
   position: relative;
-  min-height: 500px;
-  margin-top: clamp(70px, 10vw, 145px);
+  min-height: 360px;
+  margin-top: clamp(48px, 7vw, 100px);
   grid-column: 8 / -1;
 }
 
@@ -740,8 +742,8 @@ html.js:not(.reduced-motion) .scroll-cue span {
   background: var(--void);
   color: var(--void-ink);
   box-shadow:
-    inset 0 220px 180px -80px color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 78%), transparent),
-    inset 0 72px 90px -28px color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 36%), transparent);
+    inset 0 260px 200px -90px color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 72%), transparent),
+    inset 0 88px 100px -32px color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 30%), transparent);
 }
 
 .work::before {
@@ -750,13 +752,13 @@ html.js:not(.reduced-motion) .scroll-cue span {
   top: 0;
   right: 0;
   left: 0;
-  height: min(78vh, 720px);
+  height: min(92vh, 820px);
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 94%), transparent) 0%,
-    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 62%), transparent) 30%,
-    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 26%), transparent) 62%,
-    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 6%), transparent) 84%,
+    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 96%), transparent) 0%,
+    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 58%), transparent) 28%,
+    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 22%), transparent) 58%,
+    color-mix(in srgb, var(--canvas) calc((1 - var(--chamber-veil)) * 4%), transparent) 82%,
     transparent 100%
   );
   content: "";
@@ -824,12 +826,14 @@ html.js:not(.reduced-motion) .scroll-cue span {
   aspect-ratio: 4 / 3;
   grid-column: 2 / span 7;
   border: 1px solid var(--void-line);
+  border-radius: 2px;
   background:
-    radial-gradient(120% 90% at 50% 42%, color-mix(in srgb, var(--void-ink) 6%, transparent), transparent 58%),
+    radial-gradient(120% 90% at 50% 42%, color-mix(in srgb, var(--void-ink) 7%, transparent), transparent 58%),
     var(--void);
   color: color-mix(in srgb, var(--void-ink) 48%, transparent);
   clip-path: inset(0% 0% 0% 0%);
   transform-origin: 50% 48%;
+  will-change: clip-path, filter, transform, opacity;
 }
 
 .specimen__stage::before,
@@ -1563,14 +1567,17 @@ html.js:not(.reduced-motion) [data-capability] {
 
   .work.is-pinned .work__heading {
     position: absolute;
-    top: 82px;
+    top: 78px;
     left: var(--gutter);
     margin: 0;
+    max-width: min(42vw, 520px);
   }
 
   .work.is-pinned .work__heading h2 {
-    max-width: 24ch;
-    font-size: clamp(1.9rem, 2.7vw, 3.1rem);
+    max-width: 22ch;
+    font-size: clamp(2rem, 2.9vw, 3.35rem);
+    letter-spacing: -0.045em;
+    line-height: 0.92;
   }
 
   .work.is-pinned .specimen-track {

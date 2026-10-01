@@ -5,8 +5,8 @@ import { state } from '../state';
 gsap.registerPlugin(ScrollTrigger);
 
 const PHASE_LABELS = [
-  { until: 0.12, status: 'State / assembled', rotation: 'Hold / quiet', planes: 'Focus stack / 07' },
-  { until: 0.78, status: 'State / separate', rotation: 'Gap / equal', planes: 'Seven planes / open' },
+  { until: 0.1, status: 'State / assembled', rotation: 'Hold / quiet', planes: 'Focus stack / 07' },
+  { until: 0.82, status: 'State / separate', rotation: 'Gap / equal', planes: 'Seven planes / open' },
   { until: 1.01, status: 'State / settle', rotation: 'Compressed', planes: 'Match / work' },
 ] as const;
 
@@ -31,9 +31,8 @@ function setLensData(progress: number): void {
 }
 
 /**
- * Real All-Star-style pinned scrub: GSAP pin:true holds the hero stage in the
- * viewport while scroll progress drives the optic timeline 1:1. Pin spacing is
- * the runway — do not fake this with CSS sticky + a tall section.
+ * All-Star-style pinned scrub: GSAP pin:true holds the hero stage while scroll
+ * drives the optic timeline 1:1. Pin spacing is the runway.
  */
 export function initScrollytelling(): void {
   let media: gsap.MatchMedia | null = null;
@@ -80,10 +79,10 @@ export function initScrollytelling(): void {
 
         hero.classList.add('is-pinned');
 
-        // Heavy scrub lag: the pose is a function of progress, the follow is liquid.
-        const storyScrub = desktop ? 1.05 : 0.85;
-        // ~2.1–2.25 vh of pinned runway — matches the old tall-hero feel without sticky.
-        const scrubRunway = (): number => Math.round(window.innerHeight * (desktop ? 2.15 : 2.25));
+        // Snappier follow than PR #8/#9 mush — All-Star reads progress, then liquid-tracks.
+        const storyScrub = desktop ? 0.72 : 0.58;
+        // Longer runway so the open stack can hold like THE STACK before compress.
+        const scrubRunway = (): number => Math.round(window.innerHeight * (desktop ? 2.55 : 2.45));
 
         const chapter = gsap.timeline({
           defaults: { ease: 'none' },
@@ -107,8 +106,8 @@ export function initScrollytelling(): void {
           chapter.fromTo(
             heroCopy,
             { yPercent: 0, autoAlpha: 1 },
-            { yPercent: desktop ? 10 : 6, autoAlpha: 0, duration: 0.28 },
-            0.04,
+            { yPercent: desktop ? 12 : 8, autoAlpha: 0, duration: 0.22 },
+            0.03,
           );
         }
 
@@ -116,31 +115,30 @@ export function initScrollytelling(): void {
           chapter.fromTo(
             heroTitle,
             { fontVariationSettings: '"wght" 515' },
-            { fontVariationSettings: '"wght" 470', duration: 0.28 },
-            0.04,
+            { fontVariationSettings: '"wght" 460', duration: 0.22 },
+            0.03,
           );
         }
 
         if (heroSocials) {
-          chapter.fromTo(heroSocials, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -20, duration: 0.32 }, 0.08);
+          chapter.fromTo(heroSocials, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -16, duration: 0.24 }, 0.06);
         }
 
         if (scrollCue) {
-          chapter.fromTo(scrollCue, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.18 }, 0.02);
+          chapter.fromTo(scrollCue, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.14 }, 0.01);
         }
 
         if (wordmark.length) {
           chapter.fromTo(
             wordmark,
             { yPercent: 0, autoAlpha: 0.55 },
-            { yPercent: desktop ? 18 : 12, autoAlpha: 0, duration: 0.4, stagger: 0.012 },
-            0.12,
+            { yPercent: desktop ? 22 : 14, autoAlpha: 0, duration: 0.34, stagger: 0.01 },
+            0.1,
           );
         }
 
-        // Continuous cream→void melt: starts while About still owns the frame so the
-        // optic settle → Work chamber reads as one match-cut (All-Star burger→content),
-        // not pin-release / hard cut / then veil. Optic retreat is still state.handoff.
+        // Continuous cream→void melt while About still owns the frame so settle → Work
+        // reads as one match-cut (All-Star burger→content), not pin-release / hard cut.
         if (work) {
           const about = document.getElementById('about');
           const eyebrow = work.querySelector<HTMLElement>('.work__heading .eyebrow');
@@ -148,15 +146,16 @@ export function initScrollytelling(): void {
           const counter = work.querySelector<HTMLElement>('.specimen-counter');
           const firstStage = work.querySelector<HTMLElement>('[data-specimen="lens"]');
           const veilProxy = { v: 0 };
-          // Start the melt while About still fills the frame (or earlier if About missing).
+
           gsap
             .timeline({
               scrollTrigger: {
                 trigger: about ?? work,
-                start: about ? 'center 70%' : 'top 145%',
+                // Start melt as soon as About mid is still high — shorter cream gap.
+                start: about ? 'top 55%' : 'top 130%',
                 endTrigger: work,
-                end: 'top 8%',
-                scrub: desktop ? 1.15 : 0.85,
+                end: 'top 4%',
+                scrub: desktop ? 0.85 : 0.65,
                 invalidateOnRefresh: true,
               },
             })
@@ -168,6 +167,7 @@ export function initScrollytelling(): void {
                 ease: 'none',
                 onUpdate: () => {
                   const t = veilProxy.v;
+                  // Slight ease-in so cream holds, then commits to void.
                   const eased = t * t * (3 - 2 * t);
                   document.documentElement.style.setProperty('--chamber-veil', String(eased));
                 },
@@ -178,25 +178,26 @@ export function initScrollytelling(): void {
           if (eyebrow) {
             gsap.fromTo(
               eyebrow,
-              { autoAlpha: 0, y: 18 },
+              { autoAlpha: 0, y: 14 },
               {
                 autoAlpha: 1,
                 y: 0,
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 78%',
-                  end: 'top 48%',
-                  scrub: 0.75,
+                  start: 'top 82%',
+                  end: 'top 52%',
+                  scrub: 0.55,
                 },
               },
             );
           }
 
+          // Owned only here — reveal.ts skips #work headings to avoid SplitText fight.
           if (workTitle) {
             gsap.fromTo(
               workTitle,
-              { autoAlpha: 0, y: 28, filter: 'blur(8px)' },
+              { autoAlpha: 0, y: 36, filter: 'blur(10px)' },
               {
                 autoAlpha: 1,
                 y: 0,
@@ -204,9 +205,9 @@ export function initScrollytelling(): void {
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 72%',
-                  end: 'top 38%',
-                  scrub: desktop ? 0.95 : 0.7,
+                  start: 'top 78%',
+                  end: 'top 42%',
+                  scrub: desktop ? 0.7 : 0.55,
                 },
               },
             );
@@ -215,43 +216,43 @@ export function initScrollytelling(): void {
           if (counter) {
             gsap.fromTo(
               counter,
-              { autoAlpha: 0, y: 12 },
+              { autoAlpha: 0, y: 10 },
               {
                 autoAlpha: 1,
                 y: 0,
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 68%',
-                  end: 'top 42%',
-                  scrub: 0.7,
+                  start: 'top 72%',
+                  end: 'top 46%',
+                  scrub: 0.5,
                 },
               },
             );
           }
 
           // Iris tease: first specimen grows from the optical centre while the optic
-          // is still dissolving — bridge into the chamber pin bloom.
+          // dissolves — bridge into the chamber pin bloom (no empty dark beat).
           if (firstStage && !state.reducedMotion) {
             gsap.fromTo(
               firstStage,
               {
-                scale: 1.28,
-                autoAlpha: 0.12,
-                filter: 'blur(14px)',
-                clipPath: 'circle(9% at 50% 48%)',
+                scale: 1.32,
+                autoAlpha: 0.08,
+                filter: 'blur(16px)',
+                clipPath: 'circle(7% at 50% 48%)',
               },
               {
-                scale: 1.08,
-                autoAlpha: 0.62,
-                filter: 'blur(4px)',
-                clipPath: 'circle(36% at 50% 48%)',
+                scale: 1.06,
+                autoAlpha: 0.72,
+                filter: 'blur(3px)',
+                clipPath: 'circle(42% at 50% 48%)',
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 62%',
+                  start: 'top 68%',
                   end: 'top top',
-                  scrub: desktop ? 0.9 : 0.7,
+                  scrub: desktop ? 0.7 : 0.55,
                 },
               },
             );
