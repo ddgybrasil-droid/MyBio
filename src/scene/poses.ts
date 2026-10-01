@@ -63,37 +63,37 @@ function smooth(a: number, b: number, t: number): number {
 
 /**
  * Pinned hero chapter, scrubbed from `story` (All-Star THE STACK timing):
- * - 0.00–0.08 assembled hold
- * - 0.06–0.32 equidistant Y separation (snappy open, equal gaps)
- * - 0.32–0.78 hold the open stack — the labeled "burger layers" beat
- * - 0.78–1.00 compress for the Work match-cut
+ * - 0.00–0.05 assembled hold
+ * - 0.04–0.26 equidistant Y separation (near-instant open, equal gaps)
+ * - 0.26–0.84 hold the open stack — the labeled "burger layers" beat
+ * - 0.84–1.00 compress for the Work match-cut
  *
  * Face-on slabs only (no cube tumble). `heroPose(p, 0.7)` stays fully separated.
  */
 export function heroPose(p: Pose, story: number): void {
   const t = clamp01(story);
-  // Faster rise so more of the runway is spent holding the open stack.
-  const rise = clamp01((t - 0.06) / 0.26);
-  const gap = rise * (1 - smooth(0.78, 0.97, t));
-  // Equal step between neighbours. Slightly wider for clearer layer reading.
-  const step = 0.46;
+  // Near-instant rise so most of the runway is the labeled stack hold.
+  const rise = clamp01((t - 0.04) / 0.22);
+  const gap = rise * (1 - smooth(0.84, 0.99, t));
+  // Equal step between neighbours. Wider for clearer layer reading.
+  const step = 0.5;
 
   for (const s of LAMELLA_SPECS) {
     const i = s.index;
     const k = i - 3;
     const px = s.x;
     const py = s.y + k * step * gap;
-    const pz = STAGGER_Z[i] * (1 - 0.85 * gap) - k * 0.04 * gap;
-    const rx = STAGGER_PITCH[i] * (1 - 0.92 * gap) * DEG;
-    const ry = STAGGER_YAW[i] * (1 - 0.92 * gap) * DEG;
+    const pz = STAGGER_Z[i] * (1 - 0.88 * gap) - k * 0.035 * gap;
+    const rx = STAGGER_PITCH[i] * (1 - 0.94 * gap) * DEG;
+    const ry = STAGGER_YAW[i] * (1 - 0.94 * gap) * DEG;
     const rz = STAGGER_ROLL[i] * (1 - gap) * DEG;
     set(p, i, px, py, pz, rx, ry, rz, 1, 1, 1);
   }
 
   // Soft gimbal only while open — enough to catch refraction, not a tumble.
-  const yaw = 7.5 * gap * DEG;
-  const pitch = (1.8 + 3.8 * gap) * DEG;
-  group(p, pitch, yaw, 0, 1 - 0.4 * smooth(0.82, 1, t), 1, 1, 1 - 0.06 * gap);
+  const yaw = 6.5 * gap * DEG;
+  const pitch = (1.4 + 3.2 * gap) * DEG;
+  group(p, pitch, yaw, 0, 1 - 0.45 * smooth(0.86, 1, t), 1, 1, 1 - 0.05 * gap);
 }
 
 /** Settled stack — where the hero compresses before it docks into Work. */

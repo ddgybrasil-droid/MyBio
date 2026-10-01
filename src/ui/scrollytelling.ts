@@ -5,8 +5,8 @@ import { state } from '../state';
 gsap.registerPlugin(ScrollTrigger);
 
 const PHASE_LABELS = [
-  { until: 0.1, status: 'State / assembled', rotation: 'Hold / quiet', planes: 'Focus stack / 07' },
-  { until: 0.82, status: 'State / separate', rotation: 'Gap / equal', planes: 'Seven planes / open' },
+  { until: 0.08, status: 'State / assembled', rotation: 'Hold / quiet', planes: 'Focus stack / 07' },
+  { until: 0.86, status: 'State / separate', rotation: 'Gap / equal', planes: 'Seven planes / open' },
   { until: 1.01, status: 'State / settle', rotation: 'Compressed', planes: 'Match / work' },
 ] as const;
 
@@ -79,10 +79,10 @@ export function initScrollytelling(): void {
 
         hero.classList.add('is-pinned');
 
-        // Snappier follow than PR #8/#9 mush — All-Star reads progress, then liquid-tracks.
-        const storyScrub = desktop ? 0.72 : 0.58;
+        // Near-locked scrub — All-Star pins progress to scroll (no floaty catch-up).
+        const storyScrub = desktop ? 0.18 : 0.14;
         // Longer runway so the open stack can hold like THE STACK before compress.
-        const scrubRunway = (): number => Math.round(window.innerHeight * (desktop ? 2.55 : 2.45));
+        const scrubRunway = (): number => Math.round(window.innerHeight * (desktop ? 2.9 : 2.7));
 
         const chapter = gsap.timeline({
           defaults: { ease: 'none' },
@@ -106,8 +106,8 @@ export function initScrollytelling(): void {
           chapter.fromTo(
             heroCopy,
             { yPercent: 0, autoAlpha: 1 },
-            { yPercent: desktop ? 12 : 8, autoAlpha: 0, duration: 0.22 },
-            0.03,
+            { yPercent: desktop ? 10 : 6, autoAlpha: 0, duration: 0.16 },
+            0.02,
           );
         }
 
@@ -115,25 +115,25 @@ export function initScrollytelling(): void {
           chapter.fromTo(
             heroTitle,
             { fontVariationSettings: '"wght" 515' },
-            { fontVariationSettings: '"wght" 460', duration: 0.22 },
-            0.03,
+            { fontVariationSettings: '"wght" 460', duration: 0.16 },
+            0.02,
           );
         }
 
         if (heroSocials) {
-          chapter.fromTo(heroSocials, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -16, duration: 0.24 }, 0.06);
+          chapter.fromTo(heroSocials, { autoAlpha: 1, y: 0 }, { autoAlpha: 0, y: -12, duration: 0.16 }, 0.04);
         }
 
         if (scrollCue) {
-          chapter.fromTo(scrollCue, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.14 }, 0.01);
+          chapter.fromTo(scrollCue, { autoAlpha: 1 }, { autoAlpha: 0, duration: 0.1 }, 0);
         }
 
         if (wordmark.length) {
           chapter.fromTo(
             wordmark,
             { yPercent: 0, autoAlpha: 0.55 },
-            { yPercent: desktop ? 22 : 14, autoAlpha: 0, duration: 0.34, stagger: 0.01 },
-            0.1,
+            { yPercent: desktop ? 18 : 12, autoAlpha: 0, duration: 0.26, stagger: 0.008 },
+            0.06,
           );
         }
 
@@ -151,11 +151,11 @@ export function initScrollytelling(): void {
             .timeline({
               scrollTrigger: {
                 trigger: about ?? work,
-                // Start melt as soon as About mid is still high — shorter cream gap.
-                start: about ? 'top 55%' : 'top 130%',
+                // Start melt while About still owns the frame — no empty cream beat.
+                start: about ? 'top 72%' : 'top 120%',
                 endTrigger: work,
-                end: 'top 4%',
-                scrub: desktop ? 0.85 : 0.65,
+                end: 'top 2%',
+                scrub: desktop ? 0.28 : 0.22,
                 invalidateOnRefresh: true,
               },
             })
@@ -178,16 +178,16 @@ export function initScrollytelling(): void {
           if (eyebrow) {
             gsap.fromTo(
               eyebrow,
-              { autoAlpha: 0, y: 14 },
+              { autoAlpha: 0, y: 10 },
               {
                 autoAlpha: 1,
                 y: 0,
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 82%',
-                  end: 'top 52%',
-                  scrub: 0.55,
+                  start: 'top 88%',
+                  end: 'top 58%',
+                  scrub: 0.22,
                 },
               },
             );
@@ -197,7 +197,7 @@ export function initScrollytelling(): void {
           if (workTitle) {
             gsap.fromTo(
               workTitle,
-              { autoAlpha: 0, y: 36, filter: 'blur(10px)' },
+              { autoAlpha: 0, y: 28, filter: 'blur(8px)' },
               {
                 autoAlpha: 1,
                 y: 0,
@@ -205,9 +205,9 @@ export function initScrollytelling(): void {
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 78%',
-                  end: 'top 42%',
-                  scrub: desktop ? 0.7 : 0.55,
+                  start: 'top 84%',
+                  end: 'top 48%',
+                  scrub: desktop ? 0.24 : 0.2,
                 },
               },
             );
@@ -216,16 +216,16 @@ export function initScrollytelling(): void {
           if (counter) {
             gsap.fromTo(
               counter,
-              { autoAlpha: 0, y: 10 },
+              { autoAlpha: 0, y: 8 },
               {
                 autoAlpha: 1,
                 y: 0,
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 72%',
-                  end: 'top 46%',
-                  scrub: 0.5,
+                  start: 'top 78%',
+                  end: 'top 52%',
+                  scrub: 0.2,
                 },
               },
             );
@@ -237,22 +237,22 @@ export function initScrollytelling(): void {
             gsap.fromTo(
               firstStage,
               {
-                scale: 1.32,
-                autoAlpha: 0.08,
-                filter: 'blur(16px)',
-                clipPath: 'circle(7% at 50% 48%)',
+                scale: 1.28,
+                autoAlpha: 0.12,
+                filter: 'blur(14px)',
+                clipPath: 'circle(8% at 50% 48%)',
               },
               {
-                scale: 1.06,
-                autoAlpha: 0.72,
-                filter: 'blur(3px)',
-                clipPath: 'circle(42% at 50% 48%)',
+                scale: 1.04,
+                autoAlpha: 0.82,
+                filter: 'blur(2px)',
+                clipPath: 'circle(46% at 50% 48%)',
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 68%',
+                  start: 'top 78%',
                   end: 'top top',
-                  scrub: desktop ? 0.7 : 0.55,
+                  scrub: desktop ? 0.24 : 0.18,
                 },
               },
             );
