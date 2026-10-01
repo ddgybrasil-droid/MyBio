@@ -155,31 +155,36 @@ export function initReveals(): void {
             );
           }
 
-          gsap.fromTo(
-            '.capabilities',
-            { '--rule-progress': 0 },
-            {
-              '--rule-progress': 1,
-              scrollTrigger: {
-                trigger: '.capabilities',
-                start: 'top 88%',
-                end: 'top 58%',
-                scrub: true,
+          const capabilitiesRoot = document.querySelector('.capabilities');
+          if (capabilitiesRoot) {
+            gsap.fromTo(
+              capabilitiesRoot,
+              { '--rule-progress': 0 },
+              {
+                '--rule-progress': 1,
+                scrollTrigger: {
+                  trigger: capabilitiesRoot,
+                  start: 'top 88%',
+                  end: 'top 58%',
+                  scrub: 0.25,
+                },
               },
-            },
-          );
+            );
+          }
 
           const labShutters = gsap.utils.toArray<HTMLElement>('.lab__optic > span');
-          gsap.to(labShutters, {
-            xPercent: (index: number) => (index < 3 ? -70 - index * 8 : 70 + index * 5),
-            ease: 'none',
-            scrollTrigger: {
-              trigger: '#lab',
-              start: 'top 82%',
-              end: 'top 18%',
-              scrub: 0.75,
-            },
-          });
+          if (labShutters.length) {
+            gsap.to(labShutters, {
+              xPercent: (index: number) => (index < 3 ? -70 - index * 8 : 70 + index * 5),
+              ease: 'none',
+              scrollTrigger: {
+                trigger: '#lab',
+                start: 'top 82%',
+                end: 'top 18%',
+                scrub: 0.35,
+              },
+            });
+          }
 
           // Contact channels (was .signal-plate — that markup no longer exists).
           const channelGlass = gsap.utils.toArray<HTMLElement>('.contact-channels .channel__glass');
