@@ -336,11 +336,11 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     lockChapterFrame();
   }
 
-  /** Gap window shared with heroPose: snappy open, long hold, compress. */
+  /** Gap window shared with heroPose: snap open, long hold, sharp compress. */
   function separationAmount(story: number): number {
     const t = clamp(story, 0, 1);
-    const rise = clamp((t - 0.04) / 0.22, 0, 1);
-    return rise * (1 - smoothstep(0.84, 0.99, t));
+    const rise = clamp((t - 0.03) / 0.15, 0, 1);
+    return rise * (1 - smoothstep(0.88, 1, t));
   }
 
   function inChapter(): boolean {
@@ -362,8 +362,8 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     if (!work) return 0;
     const top = work.getBoundingClientRect().top;
     // Start earlier so dock/dissolve overlaps the cream→void melt.
-    const start = height * 1.6;
-    const end = height * 0.22;
+    const start = height * 1.72;
+    const end = height * 0.16;
     return clamp((start - top) / Math.max(1, start - end), 0, 1);
   }
 
@@ -390,21 +390,21 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     const specimen = document.querySelector('[data-specimen="lens"]');
     const work = document.getElementById('work');
     const workTop = work ? work.getBoundingClientRect().top : height;
-    if (specimen && exitT > 0.28) {
+    if (specimen && exitT > 0.22) {
       const r = specimen.getBoundingClientRect();
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
       const inFrame =
         r.width > 32 &&
         r.height > 32 &&
-        cy > height * 0.18 &&
-        cy < height * 0.96 &&
-        r.top > workTop - height * 0.1;
+        cy > height * 0.16 &&
+        cy < height * 0.98 &&
+        r.top > workTop - height * 0.12;
       if (inFrame) {
-        const commit = smoothstep(0.28, 0.86, exitT);
+        const commit = smoothstep(0.22, 0.82, exitT);
         dockX = (cx - width / 2) * WPP * commit;
         dockY = stageY + (-(cy - height / 2) * WPP - stageY) * commit;
-        dockS = stageS + (Math.min(r.width, r.height) * 0.24 * WPP - stageS) * commit;
+        dockS = stageS + (Math.min(r.width, r.height) * 0.28 * WPP - stageS) * commit;
       }
     }
 
@@ -548,9 +548,9 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     camera.position.z = cameraZBase * dolly;
 
     // Hold optic through melt; dissolve only as iris claims the centre (no empty dark beat).
-    let dissolve = chapter ? smoothstep(0.58, 0.96, Math.max(exitT, state.handoff * 0.85)) : 0;
-    if (!chapter && state.handoff > 0.6) dissolve = 1;
-    if (headingOwnsFrame() && exitT > 0.68) dissolve = Math.max(dissolve, smoothstep(0.68, 0.92, exitT));
+    let dissolve = chapter ? smoothstep(0.52, 0.94, Math.max(exitT, state.handoff * 0.9)) : 0;
+    if (!chapter && state.handoff > 0.55) dissolve = 1;
+    if (headingOwnsFrame() && exitT > 0.62) dissolve = Math.max(dissolve, smoothstep(0.62, 0.9, exitT));
     opticDissolve = dissolve;
 
     const presence = chapter ? 1 : anchorPresence;
@@ -698,9 +698,9 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
       current.group.set(target.group);
       hasPose = true;
     } else {
-      // Near-snap pose follow while scrubbing — floaty damp was the lag vs All-Star lock.
-      const tracking = chapter && state.story > 0.02 && state.story < 0.98 && sectionWeight('hero') > 0.35;
-      const rate = tracking ? 22 : 14;
+      // Near-snap pose follow while scrubbing — residual damp still read as float vs All-Star.
+      const tracking = chapter && state.story > 0.015 && state.story < 0.985 && sectionWeight('hero') > 0.3;
+      const rate = tracking ? 36 : 18;
       dampArray(current.lam, target.lam, rate, dt);
       dampArray(current.group, target.group, rate, dt);
     }

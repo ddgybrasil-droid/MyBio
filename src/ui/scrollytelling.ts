@@ -5,8 +5,8 @@ import { state } from '../state';
 gsap.registerPlugin(ScrollTrigger);
 
 const PHASE_LABELS = [
-  { until: 0.08, status: 'State / assembled', rotation: 'Hold / quiet', planes: 'Focus stack / 07' },
-  { until: 0.86, status: 'State / separate', rotation: 'Gap / equal', planes: 'Seven planes / open' },
+  { until: 0.06, status: 'State / assembled', rotation: 'Hold / quiet', planes: 'Focus stack / 07' },
+  { until: 0.9, status: 'State / separate', rotation: 'Gap / equal', planes: 'Seven planes / open' },
   { until: 1.01, status: 'State / settle', rotation: 'Compressed', planes: 'Match / work' },
 ] as const;
 
@@ -79,10 +79,10 @@ export function initScrollytelling(): void {
 
         hero.classList.add('is-pinned');
 
-        // Near-locked scrub — All-Star pins progress to scroll (no floaty catch-up).
-        const storyScrub = desktop ? 0.18 : 0.14;
+        // Locked scrub — kill residual float vs All-Star pin (pass 2 still lagged).
+        const storyScrub = desktop ? 0.06 : 0.05;
         // Longer runway so the open stack can hold like THE STACK before compress.
-        const scrubRunway = (): number => Math.round(window.innerHeight * (desktop ? 2.9 : 2.7));
+        const scrubRunway = (): number => Math.round(window.innerHeight * (desktop ? 3.15 : 2.9));
 
         const chapter = gsap.timeline({
           defaults: { ease: 'none' },
@@ -152,10 +152,10 @@ export function initScrollytelling(): void {
               scrollTrigger: {
                 trigger: about ?? work,
                 // Start melt while About still owns the frame — no empty cream beat.
-                start: about ? 'top 72%' : 'top 120%',
+                start: about ? 'top 78%' : 'top 120%',
                 endTrigger: work,
-                end: 'top 2%',
-                scrub: desktop ? 0.28 : 0.22,
+                end: 'top 0%',
+                scrub: desktop ? 0.12 : 0.1,
                 invalidateOnRefresh: true,
               },
             })
@@ -185,9 +185,9 @@ export function initScrollytelling(): void {
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 88%',
-                  end: 'top 58%',
-                  scrub: 0.22,
+                  start: 'top 90%',
+                  end: 'top 55%',
+                  scrub: 0.12,
                 },
               },
             );
@@ -205,9 +205,9 @@ export function initScrollytelling(): void {
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 84%',
-                  end: 'top 48%',
-                  scrub: desktop ? 0.24 : 0.2,
+                  start: 'top 86%',
+                  end: 'top 44%',
+                  scrub: desktop ? 0.12 : 0.1,
                 },
               },
             );
@@ -223,9 +223,9 @@ export function initScrollytelling(): void {
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 78%',
-                  end: 'top 52%',
-                  scrub: 0.2,
+                  start: 'top 80%',
+                  end: 'top 50%',
+                  scrub: 0.1,
                 },
               },
             );
@@ -237,22 +237,22 @@ export function initScrollytelling(): void {
             gsap.fromTo(
               firstStage,
               {
-                scale: 1.28,
-                autoAlpha: 0.12,
-                filter: 'blur(14px)',
-                clipPath: 'circle(8% at 50% 48%)',
+                scale: 1.22,
+                autoAlpha: 0.28,
+                filter: 'blur(10px)',
+                clipPath: 'circle(12% at 50% 48%)',
               },
               {
-                scale: 1.04,
-                autoAlpha: 0.82,
-                filter: 'blur(2px)',
-                clipPath: 'circle(46% at 50% 48%)',
+                scale: 1.02,
+                autoAlpha: 0.92,
+                filter: 'blur(1px)',
+                clipPath: 'circle(52% at 50% 48%)',
                 ease: 'none',
                 scrollTrigger: {
                   trigger: work,
-                  start: 'top 78%',
+                  start: 'top 82%',
                   end: 'top top',
-                  scrub: desktop ? 0.24 : 0.18,
+                  scrub: desktop ? 0.1 : 0.08,
                 },
               },
             );

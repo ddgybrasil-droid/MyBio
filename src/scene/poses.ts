@@ -63,20 +63,20 @@ function smooth(a: number, b: number, t: number): number {
 
 /**
  * Pinned hero chapter, scrubbed from `story` (All-Star THE STACK timing):
- * - 0.00–0.05 assembled hold
- * - 0.04–0.26 equidistant Y separation (near-instant open, equal gaps)
- * - 0.26–0.84 hold the open stack — the labeled "burger layers" beat
- * - 0.84–1.00 compress for the Work match-cut
+ * - 0.00–0.04 assembled hold
+ * - 0.03–0.18 equidistant Y separation (snap open, equal gaps)
+ * - 0.18–0.88 hold the open stack — labeled "burger layers" beat
+ * - 0.88–1.00 sharp compress for the Work match-cut
  *
  * Face-on slabs only (no cube tumble). `heroPose(p, 0.7)` stays fully separated.
  */
 export function heroPose(p: Pose, story: number): void {
   const t = clamp01(story);
-  // Near-instant rise so most of the runway is the labeled stack hold.
-  const rise = clamp01((t - 0.04) / 0.22);
-  const gap = rise * (1 - smooth(0.84, 0.99, t));
-  // Equal step between neighbours. Wider for clearer layer reading.
-  const step = 0.5;
+  // Snap open so most of the runway is the labeled stack hold (All-Star feel).
+  const rise = clamp01((t - 0.03) / 0.15);
+  const gap = rise * (1 - smooth(0.88, 1, t));
+  // Equal step between neighbours. Slightly wider for clearer layer reading.
+  const step = 0.52;
 
   for (const s of LAMELLA_SPECS) {
     const i = s.index;
@@ -93,7 +93,7 @@ export function heroPose(p: Pose, story: number): void {
   // Soft gimbal only while open — enough to catch refraction, not a tumble.
   const yaw = 6.5 * gap * DEG;
   const pitch = (1.4 + 3.2 * gap) * DEG;
-  group(p, pitch, yaw, 0, 1 - 0.45 * smooth(0.86, 1, t), 1, 1, 1 - 0.05 * gap);
+  group(p, pitch, yaw, 0, 1 - 0.5 * smooth(0.9, 1, t), 1, 1, 1 - 0.06 * gap);
 }
 
 /** Settled stack — where the hero compresses before it docks into Work. */

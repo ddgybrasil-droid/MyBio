@@ -55,7 +55,7 @@ export function initSpecimenChamber(): void {
                   trigger: card,
                   start: 'top 92%',
                   end: 'top 56%',
-                  scrub: 0.22,
+                  scrub: 0.1,
                 },
               },
             );
@@ -83,9 +83,9 @@ export function initSpecimenChamber(): void {
             trigger: chamber,
             start: 'top top',
             // Longer runway: open bloom + hold + two iris handoffs with reading windows.
-            end: () => `+=${Math.round(window.innerHeight * 5.2)}`,
+            end: () => `+=${Math.round(window.innerHeight * 5.6)}`,
             pin: true,
-            scrub: 0.28,
+            scrub: 0.12,
             anticipatePin: 1,
             invalidateOnRefresh: true,
           },
@@ -96,35 +96,35 @@ export function initSpecimenChamber(): void {
         });
 
         // Opening bloom continues the pre-pin iris tease (optic dissolve → specimen focus).
-        // Continues the pre-pin iris tease (circle ~46% → full inset) — no dark gap.
+        // Continues tease (circle ~52% → full inset) — no empty dark beat after morph.
         if (firstStage) {
           timeline.fromTo(
             firstStage,
             {
-              scale: 1.04,
-              autoAlpha: 0.82,
-              filter: 'blur(2px)',
-              clipPath: 'circle(46% at 50% 48%)',
+              scale: 1.02,
+              autoAlpha: 0.92,
+              filter: 'blur(1px)',
+              clipPath: 'circle(52% at 50% 48%)',
             },
             {
               scale: 1,
               autoAlpha: 1,
               filter: 'blur(0px)',
               clipPath: 'inset(0% 0% 0% 0%)',
-              duration: 0.7,
+              duration: 0.78,
             },
             0,
           );
         }
         if (firstCopy) {
-          timeline.fromTo(firstCopy, { autoAlpha: 0, y: 22 }, { autoAlpha: 1, y: 0, duration: 0.46 }, 0.2);
+          timeline.fromTo(firstCopy, { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 0.5 }, 0.22);
         }
         if (firstIndex) {
-          timeline.fromTo(firstIndex, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: 0.28 }, 0.16);
+          timeline.fromTo(firstIndex, { autoAlpha: 0, y: 6 }, { autoAlpha: 1, y: 0, duration: 0.3 }, 0.18);
         }
 
         // Reading window — All-Star holds the product before the next morph.
-        timeline.to({}, { duration: 1.05 });
+        timeline.to({}, { duration: 1.2 });
 
         for (let index = 1; index < cards.length; index += 1) {
           const previous = cards[index - 1];
@@ -145,11 +145,11 @@ export function initSpecimenChamber(): void {
           timeline.to(
             previousStage,
             {
-              scale: 0.92,
+              scale: 0.94,
               autoAlpha: 0,
-              filter: 'blur(8px)',
-              clipPath: 'circle(6% at 50% 50%)',
-              duration: 0.52,
+              filter: 'blur(6px)',
+              clipPath: 'circle(5% at 50% 50%)',
+              duration: 0.56,
             },
             '<',
           );
@@ -164,19 +164,19 @@ export function initSpecimenChamber(): void {
           timeline.fromTo(
             currentStage,
             {
-              scale: 1.1,
-              autoAlpha: 0.2,
-              filter: 'blur(12px)',
-              clipPath: 'circle(9% at 50% 48%)',
+              scale: 1.08,
+              autoAlpha: 0.28,
+              filter: 'blur(9px)',
+              clipPath: 'circle(10% at 50% 48%)',
             },
             {
               scale: 1,
               autoAlpha: 1,
               filter: 'blur(0px)',
               clipPath: 'inset(0% 0% 0% 0%)',
-              duration: 0.64,
+              duration: 0.7,
             },
-            '<0.06',
+            '<0.05',
           );
 
           if (currentCopy) {
@@ -192,7 +192,7 @@ export function initSpecimenChamber(): void {
           }
 
           timeline.set(previous, { autoAlpha: 0, visibility: 'hidden' });
-          timeline.to({}, { duration: 1.02 });
+          timeline.to({}, { duration: 1.15 });
         }
 
         return () => {
