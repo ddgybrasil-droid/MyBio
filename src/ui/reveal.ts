@@ -90,7 +90,10 @@ export function initReveals(): void {
           }
 
 
-          const headings = gsap.utils.toArray<HTMLElement>('[data-reveal-heading]');
+          // #work heading is scrub-owned by scrollytelling (match-cut); skip it here.
+          const headings = gsap.utils
+            .toArray<HTMLElement>('[data-reveal-heading]')
+            .filter((heading) => !heading.closest('#work'));
           headings.forEach((heading) => {
             const split = new SplitText(heading, {
               type: 'lines,words,chars',
@@ -100,17 +103,15 @@ export function initReveals(): void {
               aria: 'auto',
             });
             splits.push(split);
-            const inWork = Boolean(heading.closest('#work'));
             gsap.from(split.chars, {
               yPercent: 112,
               autoAlpha: 0,
-              duration: inWork ? 0.9 : 0.68,
-              stagger: inWork ? 0.022 : 0.018,
+              duration: 0.68,
+              stagger: 0.018,
               ease: 'power3.out',
               scrollTrigger: {
                 trigger: heading,
-                // Work copy arrives after the optic has released, so it doesn't fight the rods.
-                start: inWork ? 'top 50%' : 'top 84%',
+                start: 'top 84%',
                 once: true,
               },
             });
@@ -180,18 +181,22 @@ export function initReveals(): void {
             },
           });
 
-          gsap.from('.signal-plate .signal-plate__frame', {
-            y: 36,
-            autoAlpha: 0,
-            duration: 0.8,
-            stagger: 0.12,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: '.signal-bay',
-              start: 'top 84%',
-              once: true,
-            },
-          });
+          // Contact channels (was .signal-plate — that markup no longer exists).
+          const channelGlass = gsap.utils.toArray<HTMLElement>('.contact-channels .channel__glass');
+          if (channelGlass.length) {
+            gsap.from(channelGlass, {
+              y: 36,
+              autoAlpha: 0,
+              duration: 0.8,
+              stagger: 0.12,
+              ease: 'power3.out',
+              scrollTrigger: {
+                trigger: '.contact-channels',
+                start: 'top 84%',
+                once: true,
+              },
+            });
+          }
 
         },
       );

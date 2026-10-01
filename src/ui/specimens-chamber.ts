@@ -6,7 +6,8 @@ gsap.registerPlugin(ScrollTrigger);
 
 /**
  * Dark specimen chamber: pinned scrub where each work blooms like a focus pull
- * out of the optical narrative (iris / aperture), not a generic card wipe.
+ * out of the optical narrative (iris / aperture) — All-Star menu presentation,
+ * not a cube wipe.
  */
 export function initSpecimenChamber(): void {
   const chamber = document.getElementById('work');
@@ -39,13 +40,12 @@ export function initSpecimenChamber(): void {
         if (state.reducedMotion) return;
 
         if (!desktop) {
-          // Mobile keeps a scrolling stack. Each stage still opens like a focus pull out of the optic.
           cards.forEach((card) => {
             const stage = card.querySelector<HTMLElement>('.specimen__stage');
             if (!stage) return;
             gsap.fromTo(
               stage,
-              { scale: 1.12, autoAlpha: 0.45, clipPath: 'circle(16% at 50% 46%)' },
+              { scale: 1.1, autoAlpha: 0.4, clipPath: 'circle(14% at 50% 46%)' },
               {
                 scale: 1,
                 autoAlpha: 1,
@@ -54,8 +54,8 @@ export function initSpecimenChamber(): void {
                 scrollTrigger: {
                   trigger: card,
                   start: 'top 92%',
-                  end: 'top 58%',
-                  scrub: 0.7,
+                  end: 'top 56%',
+                  scrub: 0.55,
                 },
               },
             );
@@ -78,13 +78,14 @@ export function initSpecimenChamber(): void {
         const firstIndex = cards[0]?.querySelector<HTMLElement>('.specimen__index');
 
         const timeline = gsap.timeline({
-          defaults: { ease: 'power3.inOut' },
+          defaults: { ease: 'power2.inOut' },
           scrollTrigger: {
             trigger: chamber,
             start: 'top top',
-            end: () => `+=${Math.round(window.innerHeight * 4.2)}`,
+            // Longer runway: open bloom + hold + two iris handoffs with reading windows.
+            end: () => `+=${Math.round(window.innerHeight * 4.8)}`,
             pin: true,
-            scrub: 0.78,
+            scrub: 0.62,
             anticipatePin: 1,
             invalidateOnRefresh: true,
           },
@@ -94,35 +95,35 @@ export function initSpecimenChamber(): void {
           },
         });
 
-        // Opening bloom continues the pre-pin iris tease from scrollytelling
-        // (optic dissolve → specimen focus), not a fresh hard cut from 12%.
+        // Opening bloom continues the pre-pin iris tease (optic dissolve → specimen focus).
         if (firstStage) {
           timeline.fromTo(
             firstStage,
             {
-              scale: 1.1,
-              autoAlpha: 0.55,
-              filter: 'blur(6px)',
-              clipPath: 'circle(34% at 50% 48%)',
+              scale: 1.08,
+              autoAlpha: 0.7,
+              filter: 'blur(4px)',
+              clipPath: 'circle(40% at 50% 48%)',
             },
             {
               scale: 1,
               autoAlpha: 1,
               filter: 'blur(0px)',
               clipPath: 'inset(0% 0% 0% 0%)',
-              duration: 0.72,
+              duration: 0.78,
             },
             0,
           );
         }
         if (firstCopy) {
-          timeline.fromTo(firstCopy, { autoAlpha: 0, y: 36 }, { autoAlpha: 1, y: 0, duration: 0.55 }, 0.28);
+          timeline.fromTo(firstCopy, { autoAlpha: 0, y: 28 }, { autoAlpha: 1, y: 0, duration: 0.5 }, 0.26);
         }
         if (firstIndex) {
-          timeline.fromTo(firstIndex, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.35 }, 0.22);
+          timeline.fromTo(firstIndex, { autoAlpha: 0, y: 10 }, { autoAlpha: 1, y: 0, duration: 0.32 }, 0.2);
         }
 
-        timeline.to({}, { duration: 0.75 });
+        // Reading window — All-Star holds the product before the next morph.
+        timeline.to({}, { duration: 0.92 });
 
         for (let index = 1; index < cards.length; index += 1) {
           const previous = cards[index - 1];
@@ -134,50 +135,62 @@ export function initSpecimenChamber(): void {
           const previousIndex = previous?.querySelector<HTMLElement>('.specimen__index');
           const currentIndex = current?.querySelector<HTMLElement>('.specimen__index');
 
-          timeline
-            .set(current, { autoAlpha: 1, visibility: 'visible' })
-            .to(
-              previousStage,
-              {
-                scale: 0.88,
-                autoAlpha: 0,
-                filter: 'blur(8px)',
-                clipPath: 'circle(10% at 50% 50%)',
-                rotateY: -4,
-                duration: 0.62,
-              },
-              '<',
-            )
-            .to(previousCopy, { autoAlpha: 0, y: -28, duration: 0.32 }, '<0.06')
-            .to(previousIndex, { autoAlpha: 0, y: -10, duration: 0.22 }, '<')
-            .fromTo(
-              currentStage,
-              {
-                scale: 1.12,
-                autoAlpha: 0.2,
-                filter: 'blur(12px)',
-                clipPath: 'circle(12% at 50% 48%)',
-                rotateY: 5,
-              },
-              {
-                scale: 1,
-                autoAlpha: 1,
-                filter: 'blur(0px)',
-                clipPath: 'inset(0% 0% 0% 0%)',
-                rotateY: 0,
-                duration: 0.72,
-              },
-              '<0.1',
-            )
-            .fromTo(
+          // Guard every target — GSAP warns on null selectors.
+          if (!previousStage || !currentStage || !previous || !current) continue;
+
+          timeline.set(current, { autoAlpha: 1, visibility: 'visible' });
+
+          timeline.to(
+            previousStage,
+            {
+              scale: 0.9,
+              autoAlpha: 0,
+              filter: 'blur(10px)',
+              clipPath: 'circle(8% at 50% 50%)',
+              duration: 0.58,
+            },
+            '<',
+          );
+
+          if (previousCopy) {
+            timeline.to(previousCopy, { autoAlpha: 0, y: -22, duration: 0.28 }, '<0.05');
+          }
+          if (previousIndex) {
+            timeline.to(previousIndex, { autoAlpha: 0, y: -8, duration: 0.2 }, '<');
+          }
+
+          timeline.fromTo(
+            currentStage,
+            {
+              scale: 1.14,
+              autoAlpha: 0.15,
+              filter: 'blur(14px)',
+              clipPath: 'circle(10% at 50% 48%)',
+            },
+            {
+              scale: 1,
+              autoAlpha: 1,
+              filter: 'blur(0px)',
+              clipPath: 'inset(0% 0% 0% 0%)',
+              duration: 0.7,
+            },
+            '<0.08',
+          );
+
+          if (currentCopy) {
+            timeline.fromTo(
               currentCopy,
-              { autoAlpha: 0, y: 40 },
-              { autoAlpha: 1, y: 0, duration: 0.5 },
-              '<0.18',
-            )
-            .fromTo(currentIndex, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.28 }, '<')
-            .set(previous, { autoAlpha: 0, visibility: 'hidden' })
-            .to({}, { duration: 0.78 });
+              { autoAlpha: 0, y: 32 },
+              { autoAlpha: 1, y: 0, duration: 0.48 },
+              '<0.16',
+            );
+          }
+          if (currentIndex) {
+            timeline.fromTo(currentIndex, { autoAlpha: 0, y: 10 }, { autoAlpha: 1, y: 0, duration: 0.26 }, '<');
+          }
+
+          timeline.set(previous, { autoAlpha: 0, visibility: 'hidden' });
+          timeline.to({}, { duration: 0.9 });
         }
 
         return () => {
