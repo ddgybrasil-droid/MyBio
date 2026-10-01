@@ -623,8 +623,8 @@ html.js:not(.reduced-motion) .scroll-cue span {
 .about {
   position: relative;
   z-index: 2;
-  min-height: 64svh;
-  padding-block: calc(var(--section-gap) * 0.48);
+  min-height: 56svh;
+  padding-block: calc(var(--section-gap) * 0.4);
   border-bottom: 0;
 }
 
@@ -634,14 +634,14 @@ html.js:not(.reduced-motion) .scroll-cue span {
   right: 0;
   bottom: -1px;
   left: 0;
-  height: min(96vh, 880px);
+  height: min(100vh, 920px);
   background: linear-gradient(
     180deg,
     transparent 0%,
-    color-mix(in srgb, var(--void) 16%, transparent) 18%,
-    color-mix(in srgb, var(--void) 52%, transparent) 48%,
-    color-mix(in srgb, var(--void) 86%, transparent) 78%,
-    color-mix(in srgb, var(--void) 98%, transparent) 100%
+    color-mix(in srgb, var(--void) 20%, transparent) 14%,
+    color-mix(in srgb, var(--void) 58%, transparent) 42%,
+    color-mix(in srgb, var(--void) 90%, transparent) 74%,
+    color-mix(in srgb, var(--void) 99%, transparent) 100%
   );
   content: "";
   opacity: var(--chamber-veil);
@@ -825,12 +825,16 @@ html.js:not(.reduced-motion) .scroll-cue span {
   overflow: hidden;
   aspect-ratio: 4 / 3;
   grid-column: 2 / span 7;
-  border: 1px solid var(--void-line);
+  border: 1px solid color-mix(in srgb, var(--void-line) 88%, var(--void-ink));
   border-radius: 2px;
   background:
-    radial-gradient(120% 90% at 50% 42%, color-mix(in srgb, var(--void-ink) 7%, transparent), transparent 58%),
+    radial-gradient(115% 88% at 50% 40%, color-mix(in srgb, var(--void-ink) 14%, transparent), transparent 62%),
+    radial-gradient(80% 60% at 50% 70%, color-mix(in srgb, var(--void-ink) 5%, transparent), transparent 70%),
     var(--void);
-  color: color-mix(in srgb, var(--void-ink) 48%, transparent);
+  color: color-mix(in srgb, var(--void-ink) 52%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--void-ink) 4%, transparent),
+    0 28px 80px -36px color-mix(in srgb, #000 70%, transparent);
   clip-path: inset(0% 0% 0% 0%);
   transform-origin: 50% 48%;
   will-change: clip-path, filter, transform, opacity;
@@ -1598,11 +1602,16 @@ html.js:not(.reduced-motion) [data-capability] {
   }
 
   .work.is-pinned .specimen__stage {
-    grid-column: 4 / span 6;
+    grid-column: 3 / span 7;
+    min-height: min(58vh, 560px);
   }
 
   .work.is-pinned .specimen__copy {
     grid-column: 10 / -1;
+  }
+
+  .work.is-pinned .specimen__copy h3 {
+    font-size: clamp(2.15rem, 3.2vw, 3.85rem);
   }
 }
 
