@@ -36,9 +36,9 @@ function syncSceneState(): void {
   if (work) {
     const rect = work.getBoundingClientRect();
     const top = rect.top;
-    // Start while Work is still just below the fold; finish before the heading owns the frame.
-    const releaseStart = viewportHeight * 1.02;
-    const releaseEnd = viewportHeight * 0.5;
+    // Start early so the optic can match-cut while cream still melts into the chamber.
+    const releaseStart = viewportHeight * 1.38;
+    const releaseEnd = viewportHeight * 0.42;
     const enter = clamp((releaseStart - top) / Math.max(1, releaseStart - releaseEnd));
     // Drop the release once Work has scrolled away, so lab/contact can have the optic again.
     const stillCovering = clamp(rect.bottom / (viewportHeight * 0.42));

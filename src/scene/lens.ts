@@ -346,30 +346,30 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
   function inChapter(): boolean {
     if (state.reducedMotion) return false;
     if (sectionWeight('lab') >= 0.25 || sectionWeight('contact') >= 0.2) return false;
-    // While the pinned hero scrub is driving story, keep the optic locked centre-stage
-    // even if section weights flicker during pin/unpin transitions.
-    if (state.story > 0.001 && state.story < 0.999) return true;
+    // Keep centre-lock for the whole scrub including story===1 settle, then through
+    // About + handoff so pin release never drops the optic into a hard cut.
+    if (state.story > 0.001 && (sectionWeight('hero') > 0.01 || sectionWeight('about') > 0.01)) return true;
     if (sectionWeight('hero') > 0.02 || sectionWeight('about') > 0.02) return true;
     return state.handoff > 0.02 && state.handoff < 0.98;
   }
 
   /**
-   * Work approach: 0 when the chamber top is at 115% of the viewport,
-   * 1 when it reaches 62% — before the heading is readable.
+   * Work approach: 0 while chamber is still below the fold, 1 when it has almost
+   * claimed the viewport — long enough for an in-place match-cut, not a fly-away.
    */
   function readExit(): number {
     const work = document.getElementById('work');
     if (!work) return 0;
     const top = work.getBoundingClientRect().top;
-    const start = height * 1.15;
-    const end = height * 0.62;
+    const start = height * 1.32;
+    const end = height * 0.36;
     return clamp((start - top) / Math.max(1, start - end), 0, 1);
   }
 
   /**
-   * Pin the stack at viewport centre for the scrub, then sink it toward the
-   * first specimen stage (or a card-sized lower-centre dock) as Work arrives.
-   * Position is applied directly so the match-cut is not lagged by pose damping.
+   * Hold the stack at viewport centre for the scrub, then shrink it in place into
+   * the first specimen iris (All-Star burger→content match-cut). Avoid early sink
+   * to the bottom edge — that reads as a hard cut before Work owns the frame.
    */
   function lockChapterFrame(): void {
     chapter = inChapter();
@@ -381,25 +381,33 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     const stageS = Math.min(width, height) * (mobile ? 0.33 : 0.26) * WPP;
     const stageY = height * 0.015 * WPP;
 
+    // Default dock: shrink toward optical centre (same place the iris blooms).
     let dockX = 0;
-    let dockY = -height * 0.3 * WPP;
-    let dockS = Math.min(width, height) * (mobile ? 0.105 : 0.09) * WPP;
+    let dockY = stageY - height * 0.04 * WPP;
+    let dockS = Math.min(width, height) * (mobile ? 0.13 : 0.1) * WPP;
 
     const specimen = document.querySelector('[data-specimen="lens"]');
     const work = document.getElementById('work');
     const workTop = work ? work.getBoundingClientRect().top : height;
-    if (specimen) {
+    if (specimen && exitT > 0.45) {
       const r = specimen.getBoundingClientRect();
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
-      const inLowerFrame = r.width > 32 && r.height > 32 && cy > height * 0.42 && cy < height * 0.96 && r.top > workTop;
-      if (inLowerFrame) {
-        dockX = (cx - width / 2) * WPP;
-        dockY = -(cy - height / 2) * WPP;
-        dockS = Math.min(r.width, r.height) * 0.34 * WPP;
+      const inFrame =
+        r.width > 32 &&
+        r.height > 32 &&
+        cy > height * 0.28 &&
+        cy < height * 0.92 &&
+        r.top > workTop - height * 0.05;
+      if (inFrame) {
+        const commit = smoothstep(0.45, 0.88, exitT);
+        dockX = (cx - width / 2) * WPP * commit;
+        dockY = stageY + (-(cy - height / 2) * WPP - stageY) * commit;
+        dockS = stageS + (Math.min(r.width, r.height) * 0.2 * WPP - stageS) * commit;
       }
     }
 
+    // Early exit: scale in place. Late exit: commit toward specimen.
     const u = exitT * exitT * (3 - 2 * exitT);
     frame.present = true;
     frame.x = dockX * u;
@@ -538,9 +546,10 @@ export function initLensScene(canvas: HTMLCanvasElement): { dispose(): void } {
     const dolly = 1 - 0.06 * separationAmount(storyT);
     camera.position.z = cameraZBase * dolly;
 
-    let dissolve = chapter ? smoothstep(0.42, 0.9, exitT) : 0;
-    if (!chapter && state.handoff > 0.42) dissolve = 1;
-    if (headingOwnsFrame()) dissolve = 1;
+    // Hold the optic through the cream→void melt; dissolve late so iris can take over.
+    let dissolve = chapter ? smoothstep(0.58, 0.96, Math.max(exitT, state.handoff * 0.85)) : 0;
+    if (!chapter && state.handoff > 0.55) dissolve = 1;
+    if (headingOwnsFrame() && exitT > 0.7) dissolve = Math.max(dissolve, smoothstep(0.7, 0.92, exitT));
     opticDissolve = dissolve;
 
     const presence = chapter ? 1 : anchorPresence;

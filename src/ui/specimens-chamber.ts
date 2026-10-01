@@ -94,22 +94,23 @@ export function initSpecimenChamber(): void {
           },
         });
 
-        // Opening bloom: first specimen focuses in from the optical centre.
+        // Opening bloom continues the pre-pin iris tease from scrollytelling
+        // (optic dissolve → specimen focus), not a fresh hard cut from 12%.
         if (firstStage) {
-            timeline.fromTo(
+          timeline.fromTo(
             firstStage,
             {
-              scale: 1.24,
-              autoAlpha: 0.2,
-              filter: 'blur(12px)',
-              clipPath: 'circle(12% at 50% 48%)',
+              scale: 1.1,
+              autoAlpha: 0.55,
+              filter: 'blur(6px)',
+              clipPath: 'circle(34% at 50% 48%)',
             },
             {
               scale: 1,
               autoAlpha: 1,
               filter: 'blur(0px)',
               clipPath: 'inset(0% 0% 0% 0%)',
-              duration: 0.85,
+              duration: 0.72,
             },
             0,
           );
