@@ -623,8 +623,8 @@ html.js:not(.reduced-motion) .scroll-cue span {
 .about {
   position: relative;
   z-index: 2;
-  min-height: 78svh;
-  padding-block: calc(var(--section-gap) * 0.62);
+  min-height: 64svh;
+  padding-block: calc(var(--section-gap) * 0.48);
   border-bottom: 0;
 }
 
@@ -634,14 +634,14 @@ html.js:not(.reduced-motion) .scroll-cue span {
   right: 0;
   bottom: -1px;
   left: 0;
-  height: min(88vh, 780px);
+  height: min(96vh, 880px);
   background: linear-gradient(
     180deg,
     transparent 0%,
-    color-mix(in srgb, var(--void) 12%, transparent) 22%,
-    color-mix(in srgb, var(--void) 48%, transparent) 55%,
-    color-mix(in srgb, var(--void) 82%, transparent) 82%,
-    color-mix(in srgb, var(--void) 96%, transparent) 100%
+    color-mix(in srgb, var(--void) 16%, transparent) 18%,
+    color-mix(in srgb, var(--void) 52%, transparent) 48%,
+    color-mix(in srgb, var(--void) 86%, transparent) 78%,
+    color-mix(in srgb, var(--void) 98%, transparent) 100%
   );
   content: "";
   opacity: var(--chamber-veil);
